@@ -25,6 +25,8 @@ export default function AdminPage() {
   const [uploadingFile, setUploadingFile] = useState(false);
   const [savingResource, setSavingResource] = useState(false);
   const [notification, setNotification] = useState(null);
+  const [fileSourceMode, setFileSourceMode] = useState('upload'); // 'upload' | 'url'
+  const [uploadedFileName, setUploadedFileName] = useState('');
 
   // Form Fields
   const [formData, setFormData] = useState({
@@ -114,10 +116,12 @@ export default function AdminPage() {
 
       if (json.success) {
         if (fieldName === 'fileUrl') {
+          setUploadedFileName(file.name);
           setFormData((prev) => ({
             ...prev,
             fileUrl: json.url,
-            fileSize: json.fileSize
+            fileSize: json.fileSize,
+            title: prev.title || file.name.replace(/\.[^/.]+$/, "").replace(/_/g, " ")
           }));
         } else if (fieldName === 'coverUrl') {
           setFormData((prev) => ({
@@ -125,12 +129,12 @@ export default function AdminPage() {
             coverUrl: json.url
           }));
         }
-        showNotification('Archivo cargado exitosamente', 'success');
+        showNotification('✓ Archivo cargado exitosamente en la nube', 'success');
       } else {
-        showNotification('Fallo al subir el archivo: ' + json.message, 'error');
+        showNotification('❌ Error al subir: ' + json.message, 'error');
       }
     } catch (err) {
-      showNotification('Error al contactar el servidor de carga', 'error');
+      showNotification('❌ Error de red al contactar el servidor de carga', 'error');
     } finally {
       setUploadingFile(false);
     }
@@ -138,6 +142,17 @@ export default function AdminPage() {
 
   const handleSaveResource = async (e) => {
     e.preventDefault();
+
+    if (uploadingFile) {
+      showNotification('El archivo todavía se está cargando a la nube, por favor espera un momento...', 'error');
+      return;
+    }
+
+    if (!formData.fileUrl) {
+      showNotification('Por favor selecciona un archivo desde tu computadora o ingresa un enlace antes de publicar.', 'error');
+      return;
+    }
+
     setSavingResource(true);
 
     try {
@@ -149,8 +164,9 @@ export default function AdminPage() {
       const json = await res.json();
 
       if (json.success) {
-        showNotification('¡Recurso añadido exitosamente al repositorio!', 'success');
+        showNotification('¡Recurso publicado exitosamente en el repositorio!', 'success');
         setIsModalOpen(false);
+        setUploadedFileName('');
         setFormData({
           title: '',
           type: 'libro',
@@ -168,7 +184,7 @@ export default function AdminPage() {
         showNotification(json.message || 'Error al guardar el recurso', 'error');
       }
     } catch (err) {
-      showNotification('Error de conexión', 'error');
+      showNotification('Error de conexión con el servidor', 'error');
     } finally {
       setSavingResource(false);
     }
@@ -612,36 +628,100 @@ export default function AdminPage() {
                 </div>
 
                 {/* File Upload to Supabase */}
-                <div className="p-4 rounded-2xl bg-gray-50 border border-gray-200 space-y-3">
-                  <label className="block text-xs font-bold uppercase text-gray-700">
-                    Archivo Multimedia (Libro PDF, Audio MP3 o Video) *
-                  </label>
-                  
-                  <div className="flex flex-col sm:flex-row items-center gap-3">
-                    <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-cemim-dark hover:bg-cemim-green text-white text-xs font-bold transition-colors">
-                      <Upload className="w-4 h-4" />
-                      {uploadingFile ? 'Subiendo a Supabase...' : 'Seleccionar Archivo Local'}
-                      <input
-                        type="file"
-                        className="hidden"
-                        onChange={(e) => handleFileUpload(e, 'fileUrl')}
-                      />
+                <div className="p-5 rounded-2xl bg-gray-50 border border-gray-200 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-bold uppercase text-gray-700">
+                      Archivo Multimedia *
                     </label>
-                    <span className="text-xs text-gray-400">o ingresa una URL directa:</span>
+                    <div className="inline-flex rounded-lg bg-gray-200 p-0.5 text-xs font-semibold">
+                      <button
+                        type="button"
+                        onClick={() => setFileSourceMode('upload')}
+                        className={`px-3 py-1 rounded-md transition-all ${
+                          fileSourceMode === 'upload' ? 'bg-white text-cemim-dark shadow-sm' : 'text-gray-600 hover:text-black'
+                        }`}
+                      >
+                        Subir desde mi PC
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setFileSourceMode('url')}
+                        className={`px-3 py-1 rounded-md transition-all ${
+                          fileSourceMode === 'url' ? 'bg-white text-cemim-dark shadow-sm' : 'text-gray-600 hover:text-black'
+                        }`}
+                      >
+                        Pegar enlace / URL
+                      </button>
+                    </div>
                   </div>
 
-                  <input
-                    type="url"
-                    required
-                    value={formData.fileUrl}
-                    onChange={(e) => setFormData({ ...formData, fileUrl: e.target.value })}
-                    placeholder="https://... URL del archivo"
-                    className="w-full px-4 py-2 rounded-xl border border-gray-200 bg-white text-xs focus:outline-none focus:ring-2 focus:ring-cemim-green/30"
-                  />
-                  {formData.fileUrl && (
-                    <p className="text-[11px] text-green-700 font-medium">
-                      ✓ Archivo vinculado: {formData.fileUrl}
-                    </p>
+                  {fileSourceMode === 'upload' ? (
+                    <div>
+                      {formData.fileUrl ? (
+                        <div className="flex items-center justify-between p-4 rounded-xl bg-green-50 border border-green-200 text-green-900">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0" />
+                            <div className="min-w-0">
+                              <p className="text-sm font-bold truncate">
+                                {uploadedFileName || 'Archivo cargado en la nube'}
+                              </p>
+                              <p className="text-xs text-green-700">
+                                {formData.fileSize ? `Tamaño: ${formData.fileSize}` : 'Listo para publicar'}
+                              </p>
+                            </div>
+                          </div>
+                          <label className="cursor-pointer text-xs font-bold text-cemim-green hover:underline ml-4 flex-shrink-0">
+                            Cambiar archivo
+                            <input
+                              type="file"
+                              className="hidden"
+                              onChange={(e) => handleFileUpload(e, 'fileUrl')}
+                            />
+                          </label>
+                        </div>
+                      ) : (
+                        <label className={`cursor-pointer flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-2xl transition-all ${
+                          uploadingFile 
+                            ? 'border-cemim-green bg-cemim-green/5' 
+                            : 'border-gray-300 hover:border-cemim-green bg-white hover:bg-gray-50'
+                        }`}>
+                          {uploadingFile ? (
+                            <div className="flex flex-col items-center gap-2 text-cemim-green py-2">
+                              <div className="h-8 w-8 animate-spin rounded-full border-4 border-cemim-green border-r-transparent"></div>
+                              <p className="text-xs font-bold mt-2">Subiendo archivo a la nube... por favor espera</p>
+                            </div>
+                          ) : (
+                            <div className="flex flex-col items-center gap-2 text-center py-2">
+                              <div className="w-12 h-12 rounded-xl bg-cemim-green/10 text-cemim-green flex items-center justify-center">
+                                <Upload className="w-6 h-6" />
+                              </div>
+                              <p className="text-sm font-bold text-gray-800">
+                                Haz clic aquí para seleccionar el archivo desde tu equipo
+                              </p>
+                              <p className="text-xs text-gray-400">
+                                {formData.type === 'libro' ? 'Documentos PDF, EPUB' : formData.type === 'audio' ? 'Archivos MP3, WAV' : 'Archivos de video MP4'}
+                              </p>
+                            </div>
+                          )}
+                          <input
+                            type="file"
+                            disabled={uploadingFile}
+                            className="hidden"
+                            onChange={(e) => handleFileUpload(e, 'fileUrl')}
+                          />
+                        </label>
+                      )}
+                    </div>
+                  ) : (
+                    <div>
+                      <input
+                        type="text"
+                        value={formData.fileUrl}
+                        onChange={(e) => setFormData({ ...formData, fileUrl: e.target.value })}
+                        placeholder="https://... Enlace directo o URL del archivo"
+                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-xs focus:outline-none focus:ring-2 focus:ring-cemim-green/30"
+                      />
+                    </div>
                   )}
                 </div>
 
