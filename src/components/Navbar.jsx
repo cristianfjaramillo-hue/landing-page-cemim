@@ -13,7 +13,7 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-20">
           
           {/* Logo & Brand Name */}
-          <Link href="/" className="flex items-center gap-3 group">
+          <Link href="/" className="flex items-center gap-3 group flex-shrink-0">
             <div className="h-12 w-12 rounded-xl bg-white border border-white/30 overflow-hidden flex items-center justify-center p-1 shadow-md group-hover:scale-105 transition-transform">
               <img 
                 src="/logo.jpg" 
@@ -32,7 +32,7 @@ export default function Navbar() {
           </Link>
 
           {/* Desktop Navigation Links */}
-          <nav className="hidden md:flex items-center gap-3">
+          <nav className="hidden md:flex items-center gap-6 lg:gap-8 ml-8">
             <a 
               href="#acerca" 
               className="text-sm font-semibold text-white/90 hover:text-white hover:bg-white/10 px-3.5 py-2 rounded-xl transition-all"
@@ -44,18 +44,18 @@ export default function Navbar() {
               className="text-sm font-semibold text-white/90 hover:text-white hover:bg-white/10 px-3.5 py-2 rounded-xl flex items-center gap-1.5 transition-all"
             >
               <Compass className="w-4 h-4 text-white" />
-              Recursos
+              <span>Recursos</span>
             </a>
+          </nav>
+
+          {/* Right Section: Contactos + Admin Link + CTA */}
+          <div className="hidden md:flex items-center gap-4 lg:gap-5 ml-auto">
             <a 
               href="#contacto" 
               className="text-sm font-semibold text-white/90 hover:text-white hover:bg-white/10 px-3.5 py-2 rounded-xl transition-all"
             >
-              Contacto
+              Contactos
             </a>
-          </nav>
-
-          {/* CTA & Admin Link */}
-          <div className="hidden md:flex items-center gap-3">
             <Link 
               href="/admin" 
               className="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-xl transition-colors"
@@ -114,7 +114,7 @@ export default function Navbar() {
             onClick={() => setIsOpen(false)}
             className="block px-3 py-2.5 rounded-xl text-base font-semibold text-white hover:bg-white/15 transition-colors"
           >
-            Contacto e Inscripciones
+            Contactos
           </a>
           <div className="pt-2">
             <a
