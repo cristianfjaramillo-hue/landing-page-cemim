@@ -28,6 +28,28 @@ export default function ContactSection() {
       });
       const data = await res.json();
       if (data.success) {
+        // Enviar también desde el navegador para entrega directa de FormSubmit evitando bloqueos de servidor
+        try {
+          fetch('https://formsubmit.co/ajax/cristian.f.jaramillo@gmail.com', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+              _subject: `Nuevo Registro CEMIM: ${formData.nombre} (${formData.interes})`,
+              _replyto: formData.email,
+              _template: 'table',
+              _captcha: 'false',
+              'Nombre Completo': formData.nombre,
+              'Correo Electrónico': formData.email,
+              'Teléfono / WhatsApp': formData.telefono || 'No provisto',
+              'Área de Interés': formData.interes,
+              'Mensaje': formData.mensaje || 'Sin mensaje'
+            })
+          }).catch(() => {});
+        } catch (_) {}
+
         setSubmitted(true);
         setFormData({
           nombre: '',

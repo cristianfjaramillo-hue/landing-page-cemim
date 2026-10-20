@@ -4,7 +4,8 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { 
   ShieldCheck, Lock, Mail, Upload, Trash2, Plus, LogOut, 
-  BookOpen, Headphones, Video, CheckCircle2, AlertCircle, Eye, RefreshCw, FileText, Clock
+  BookOpen, Headphones, Video, CheckCircle2, AlertCircle, Eye, RefreshCw, FileText, Clock,
+  MessageSquare, Phone, ExternalLink, Inbox, Users
 } from 'lucide-react';
 import { getStreamableMediaUrl } from '@/lib/mediaUtils';
 
@@ -16,10 +17,17 @@ export default function AdminPage() {
   const [authError, setAuthError] = useState('');
   const [authLoading, setAuthLoading] = useState(false);
 
+  // Active Tab
+  const [activeTab, setActiveTab] = useState('recursos'); // 'recursos' | 'contactos'
+
   // Resources State
   const [resources, setResources] = useState([]);
   const [loadingResources, setLoadingResources] = useState(false);
   const [filterType, setFilterType] = useState('todos');
+
+  // Registrations / Inquiries State
+  const [registrations, setRegistrations] = useState([]);
+  const [loadingRegistrations, setLoadingRegistrations] = useState(false);
 
   // New Resource Form Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -49,6 +57,7 @@ export default function AdminPage() {
     if (savedAuth === 'true') {
       setIsAuthenticated(true);
       fetchResources();
+      fetchRegistrations();
     }
   }, []);
 
@@ -69,6 +78,7 @@ export default function AdminPage() {
         setIsAuthenticated(true);
         localStorage.setItem('cemim_admin_logged', 'true');
         fetchResources();
+        fetchRegistrations();
       } else {
         setAuthError(data.message || 'Credenciales incorrectas');
       }
@@ -97,6 +107,56 @@ export default function AdminPage() {
     } finally {
       setLoadingResources(false);
     }
+  };
+
+  const fetchRegistrations = async () => {
+    setLoadingRegistrations(true);
+    try {
+      const res = await fetch(`/api/contact?t=${Date.now()}`, { cache: 'no-store' });
+      const json = await res.json();
+      if (json.success && Array.isArray(json.data)) {
+        setRegistrations(json.data);
+      }
+    } catch (err) {
+      console.error('Error fetching registrations:', err);
+    } finally {
+      setLoadingRegistrations(false);
+    }
+  };
+
+  const handleDeleteRegistration = async (id, nombre) => {
+    const confirmDelete = window.confirm(`¿Estás seguro de que deseas eliminar el registro de "${nombre}"?`);
+    if (!confirmDelete) return;
+
+    // Optimistic removal
+    setRegistrations((prev) => prev.filter((r) => r.id !== id));
+
+    try {
+      const res = await fetch(`/api/contact?id=${encodeURIComponent(id)}`, {
+        method: 'DELETE'
+      });
+      const json = await res.json();
+
+      if (json.success) {
+        showNotification('Registro eliminado de la bandeja', 'success');
+      } else {
+        showNotification('Error al eliminar: ' + json.message, 'error');
+        fetchRegistrations();
+      }
+    } catch (err) {
+      showNotification('Error de conexión al eliminar registro', 'error');
+      fetchRegistrations();
+    }
+  };
+
+  const formatWhatsAppUrl = (phone, name) => {
+    if (!phone) return null;
+    let cleaned = phone.replace(/[^0-9]/g, '');
+    if (cleaned.startsWith('09') && cleaned.length === 10) {
+      cleaned = '593' + cleaned.substring(1);
+    }
+    const text = encodeURIComponent(`¡Hola ${name || ''}! Te saludamos desde CEMIM Mangayacu con respecto a tu solicitud de información.`);
+    return `https://wa.me/${cleaned}?text=${text}`;
   };
 
   // Open clean modal
@@ -388,164 +448,401 @@ export default function AdminPage() {
         </div>
 
         {/* Metric Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-          <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-cemim-green/10 text-cemim-green flex items-center justify-center">
-              <BookOpen className="w-7 h-7" />
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+          <div 
+            onClick={() => { setActiveTab('recursos'); setFilterType('libro'); }}
+            className="bg-white p-5 sm:p-6 rounded-2xl border border-gray-200 shadow-sm flex items-center gap-4 cursor-pointer hover:border-cemim-green transition-all"
+          >
+            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-cemim-green/10 text-cemim-green flex items-center justify-center flex-shrink-0">
+              <BookOpen className="w-6 h-6 sm:w-7 sm:h-7" />
             </div>
             <div>
-              <p className="text-xs uppercase font-bold text-gray-400">Total Libros (PDF)</p>
+              <p className="text-xs uppercase font-bold text-gray-400">Libros (PDF)</p>
               <h3 className="text-2xl font-black text-cemim-dark">{totalLibros}</h3>
             </div>
           </div>
 
-          <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center">
-              <Headphones className="w-7 h-7" />
+          <div 
+            onClick={() => { setActiveTab('recursos'); setFilterType('audio'); }}
+            className="bg-white p-5 sm:p-6 rounded-2xl border border-gray-200 shadow-sm flex items-center gap-4 cursor-pointer hover:border-blue-500 transition-all"
+          >
+            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0">
+              <Headphones className="w-6 h-6 sm:w-7 sm:h-7" />
             </div>
             <div>
-              <p className="text-xs uppercase font-bold text-gray-400">Total Cuentos en Audio</p>
+              <p className="text-xs uppercase font-bold text-gray-400">Cuentos en Audio</p>
               <h3 className="text-2xl font-black text-cemim-dark">{totalAudios}</h3>
             </div>
           </div>
 
-          <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-red-50 text-red-600 flex items-center justify-center">
-              <Video className="w-7 h-7" />
+          <div 
+            onClick={() => { setActiveTab('recursos'); setFilterType('video'); }}
+            className="bg-white p-5 sm:p-6 rounded-2xl border border-gray-200 shadow-sm flex items-center gap-4 cursor-pointer hover:border-red-500 transition-all"
+          >
+            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-red-50 text-red-600 flex items-center justify-center flex-shrink-0">
+              <Video className="w-6 h-6 sm:w-7 sm:h-7" />
             </div>
             <div>
-              <p className="text-xs uppercase font-bold text-gray-400">Total VIDEOS</p>
+              <p className="text-xs uppercase font-bold text-gray-400">Videos</p>
               <h3 className="text-2xl font-black text-cemim-dark">{totalVideos}</h3>
             </div>
           </div>
+
+          <div 
+            onClick={() => setActiveTab('contactos')}
+            className={`p-5 sm:p-6 rounded-2xl border shadow-sm flex items-center gap-4 cursor-pointer transition-all ${
+              activeTab === 'contactos' 
+                ? 'bg-amber-50/50 border-amber-300 ring-2 ring-amber-400/20' 
+                : 'bg-white border-gray-200 hover:border-amber-400'
+            }`}
+          >
+            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center flex-shrink-0">
+              <Inbox className="w-6 h-6 sm:w-7 sm:h-7" />
+            </div>
+            <div>
+              <p className="text-xs uppercase font-bold text-gray-400">Inscripciones Recibidas</p>
+              <h3 className="text-2xl font-black text-cemim-dark flex items-center gap-2">
+                {registrations.length}
+                {registrations.length > 0 && (
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-amber-500 text-white font-bold animate-pulse">
+                    Nuevos
+                  </span>
+                )}
+              </h3>
+            </div>
+          </div>
         </div>
 
-        {/* Resources Table Section */}
-        <div className="bg-white rounded-3xl border border-gray-200 shadow-sm overflow-hidden">
-          
-          {/* Controls Bar */}
-          <div className="p-6 border-b border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold uppercase text-gray-400">Filtrar por:</span>
-              {['todos', 'libro', 'audio', 'video'].map((type) => (
-                <button
-                  key={type}
-                  onClick={() => setFilterType(type)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold capitalize transition-colors ${
-                    filterType === type 
-                      ? 'bg-cemim-dark text-white' 
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                >
-                  {type === 'todos' ? 'Todos' : type === 'libro' ? 'Libros' : type === 'audio' ? 'Audios' : 'Videos'}
-                </button>
-              ))}
+        {/* Tab Navigation */}
+        <div className="flex border-b border-gray-200 gap-3 sm:gap-6 overflow-x-auto">
+          <button
+            onClick={() => setActiveTab('recursos')}
+            className={`pb-3.5 px-3 text-sm font-bold border-b-2 whitespace-nowrap transition-all flex items-center gap-2 ${
+              activeTab === 'recursos'
+                ? 'border-cemim-green text-cemim-green'
+                : 'border-transparent text-gray-500 hover:text-gray-800'
+            }`}
+          >
+            <BookOpen className="w-4 h-4" />
+            <span>Biblioteca Multimedia ({resources.length})</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('contactos')}
+            className={`pb-3.5 px-3 text-sm font-bold border-b-2 whitespace-nowrap transition-all flex items-center gap-2 ${
+              activeTab === 'contactos'
+                ? 'border-cemim-green text-cemim-green'
+                : 'border-transparent text-gray-500 hover:text-gray-800'
+            }`}
+          >
+            <Inbox className="w-4 h-4" />
+            <span>Bandeja de Contactos e Inscripciones</span>
+            <span className={`px-2 py-0.5 rounded-full text-xs font-black ${
+              registrations.length > 0 
+                ? 'bg-amber-500 text-white' 
+                : 'bg-gray-100 text-gray-500'
+            }`}>
+              {registrations.length}
+            </span>
+          </button>
+        </div>
+
+        {/* ================= TAB 1: RECURSOS MULTIMEDIA ================= */}
+        {activeTab === 'recursos' && (
+          <div className="bg-white rounded-3xl border border-gray-200 shadow-sm overflow-hidden">
+            {/* Controls Bar */}
+            <div className="p-6 border-b border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs font-bold uppercase text-gray-400">Filtrar por:</span>
+                {['todos', 'libro', 'audio', 'video'].map((type) => (
+                  <button
+                    key={type}
+                    onClick={() => setFilterType(type)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold capitalize transition-colors ${
+                      filterType === type 
+                        ? 'bg-cemim-dark text-white' 
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    {type === 'todos' ? 'Todos' : type === 'libro' ? 'Libros' : type === 'audio' ? 'Audios' : 'Videos'}
+                  </button>
+                ))}
+              </div>
+
+              <button
+                onClick={fetchResources}
+                className="inline-flex items-center gap-1.5 text-xs text-gray-500 hover:text-cemim-green"
+                title="Refrescar lista"
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+                Actualizar lista
+              </button>
             </div>
 
-            <button
-              onClick={fetchResources}
-              className="inline-flex items-center gap-1.5 text-xs text-gray-500 hover:text-cemim-green"
-              title="Refrescar lista"
-            >
-              <RefreshCw className="w-3.5 h-3.5" />
-              Actualizar lista
-            </button>
-          </div>
-
-          {/* Table */}
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm text-gray-600">
-              <thead className="bg-gray-50 text-xs uppercase font-bold text-gray-400 border-b border-gray-100">
-                <tr>
-                  <th className="px-6 py-4">Recurso</th>
-                  <th className="px-6 py-4">Tipo</th>
-                  <th className="px-6 py-4">Autor / Dpto</th>
-                  <th className="px-6 py-4">Categoría</th>
-                  <th className="px-6 py-4">Fecha</th>
-                  <th className="px-6 py-4 text-right">Acciones</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {loadingResources ? (
+            {/* Resources Table */}
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm text-gray-600">
+                <thead className="bg-gray-50 text-xs uppercase font-bold text-gray-400 border-b border-gray-100">
                   <tr>
-                    <td colSpan="6" className="text-center py-12 text-gray-400 font-medium">
-                      Cargando recursos...
-                    </td>
+                    <th className="px-6 py-4">Recurso</th>
+                    <th className="px-6 py-4">Tipo</th>
+                    <th className="px-6 py-4">Autor / Dpto</th>
+                    <th className="px-6 py-4">Categoría</th>
+                    <th className="px-6 py-4">Fecha</th>
+                    <th className="px-6 py-4 text-right">Acciones</th>
                   </tr>
-                ) : filteredList.length === 0 ? (
-                  <tr>
-                    <td colSpan="6" className="text-center py-12 text-gray-400 font-medium">
-                      No hay recursos en esta categoría.
-                    </td>
-                  </tr>
-                ) : (
-                  filteredList.map((item) => (
-                    <tr key={item.id} className="hover:bg-gray-50/80 transition-colors">
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0 border border-gray-200">
-                            {item.coverUrl ? (
-                              <img src={item.coverUrl} alt={item.title} className="w-full h-full object-cover" />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center bg-gray-200 text-gray-400">
-                                <FileText className="w-5 h-5" />
-                              </div>
-                            )}
-                          </div>
-                          <div>
-                            <p className="font-bold text-cemim-dark line-clamp-1">{item.title}</p>
-                            <span className="text-xs text-gray-400">{item.fileSize || 'Archivo'}</span>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider ${
-                          item.type === 'libro'
-                            ? 'bg-amber-100 text-amber-800'
-                            : item.type === 'audio'
-                            ? 'bg-blue-100 text-blue-800'
-                            : 'bg-red-100 text-red-800'
-                        }`}>
-                          {item.type}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-xs font-medium text-gray-700">
-                        {item.author}
-                      </td>
-                      <td className="px-6 py-4 text-xs text-gray-500">
-                        {item.category}
-                      </td>
-                      <td className="px-6 py-4 text-xs text-gray-400">
-                        {item.createdAt || '2026'}
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <a
-                            href={item.fileUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="p-2 rounded-lg text-gray-500 hover:text-cemim-green hover:bg-gray-100 transition-colors"
-                            title="Ver / Descargar archivo"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </a>
-                          <button
-                            onClick={() => handleDeleteResource(item.id, item.title)}
-                            className="p-2 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-                            title="Eliminar permanentemente"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {loadingResources ? (
+                    <tr>
+                      <td colSpan="6" className="text-center py-12 text-gray-400 font-medium">
+                        Cargando recursos...
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                  ) : filteredList.length === 0 ? (
+                    <tr>
+                      <td colSpan="6" className="text-center py-12 text-gray-400 font-medium">
+                        No hay recursos en esta categoría.
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredList.map((item) => (
+                      <tr key={item.id} className="hover:bg-gray-50/80 transition-colors">
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0 border border-gray-200">
+                              {item.coverUrl ? (
+                                <img src={item.coverUrl} alt={item.title} className="w-full h-full object-cover" />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center bg-gray-200 text-gray-400">
+                                  <FileText className="w-5 h-5" />
+                                </div>
+                              )}
+                            </div>
+                            <div>
+                              <p className="font-bold text-cemim-dark line-clamp-1">{item.title}</p>
+                              <span className="text-xs text-gray-400">{item.fileSize || 'Archivo'}</span>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider ${
+                            item.type === 'libro'
+                              ? 'bg-amber-100 text-amber-800'
+                              : item.type === 'audio'
+                              ? 'bg-blue-100 text-blue-800'
+                              : 'bg-red-100 text-red-800'
+                          }`}>
+                            {item.type}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-xs font-medium text-gray-700">
+                          {item.author}
+                        </td>
+                        <td className="px-6 py-4 text-xs text-gray-500">
+                          {item.category}
+                        </td>
+                        <td className="px-6 py-4 text-xs text-gray-400">
+                          {item.createdAt || '2026'}
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <a
+                              href={item.fileUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="p-2 rounded-lg text-gray-500 hover:text-cemim-green hover:bg-gray-100 transition-colors"
+                              title="Ver / Descargar archivo"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </a>
+                            <button
+                              onClick={() => handleDeleteResource(item.id, item.title)}
+                              className="p-2 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                              title="Eliminar permanentemente"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
+        )}
 
-        </div>
+        {/* ================= TAB 2: BANDEJA DE CONTACTOS / INSCRIPCIONES ================= */}
+        {activeTab === 'contactos' && (
+          <div className="bg-white rounded-3xl border border-gray-200 shadow-sm overflow-hidden">
+            {/* Header Inquiries */}
+            <div className="p-6 border-b border-gray-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div>
+                <h3 className="font-serif text-xl font-bold text-cemim-dark flex items-center gap-2">
+                  <Inbox className="w-5 h-5 text-cemim-green" />
+                  Bandeja de Contactos y Formularios Recibidos
+                </h3>
+                <p className="text-xs text-gray-500 mt-1">
+                  Todos los registros se almacenan inmediatamente en la nube de Supabase. Puedes contactar a cada persona por WhatsApp o Correo con un clic.
+                </p>
+              </div>
+
+              <button
+                onClick={fetchRegistrations}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-xs text-gray-700 font-semibold transition-colors"
+                title="Refrescar lista de registros"
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+                Actualizar bandeja
+              </button>
+            </div>
+
+            {/* Inquiries Table */}
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm text-gray-600">
+                <thead className="bg-gray-50 text-xs uppercase font-bold text-gray-400 border-b border-gray-100">
+                  <tr>
+                    <th className="px-6 py-4">Fecha</th>
+                    <th className="px-6 py-4">Aspirante / Nombre</th>
+                    <th className="px-6 py-4">Correo Electrónico</th>
+                    <th className="px-6 py-4">WhatsApp / Teléfono</th>
+                    <th className="px-6 py-4">Programa de Interés</th>
+                    <th className="px-6 py-4">Mensaje</th>
+                    <th className="px-6 py-4 text-right">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {loadingRegistrations ? (
+                    <tr>
+                      <td colSpan="7" className="text-center py-12 text-gray-400 font-medium">
+                        Cargando solicitudes...
+                      </td>
+                    </tr>
+                  ) : registrations.length === 0 ? (
+                    <tr>
+                      <td colSpan="7" className="text-center py-16 text-gray-400">
+                        <Inbox className="w-10 h-10 mx-auto mb-2 text-gray-300" />
+                        <p className="font-bold text-gray-600">No hay solicitudes registradas todavía.</p>
+                        <p className="text-xs text-gray-400 mt-1">Cuando una persona complete el formulario en la web, aparecerá aquí al instante.</p>
+                      </td>
+                    </tr>
+                  ) : (
+                    registrations.map((item) => {
+                      const waUrl = formatWhatsAppUrl(item.telefono, item.nombre);
+                      const formattedDate = item.createdAt 
+                        ? new Date(item.createdAt).toLocaleDateString('es-EC', {
+                            day: '2-digit',
+                            month: 'short',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })
+                        : 'Reciente';
+
+                      return (
+                        <tr key={item.id} className="hover:bg-gray-50/80 transition-colors">
+                          {/* Fecha */}
+                          <td className="px-6 py-4 text-xs text-gray-400 whitespace-nowrap">
+                            <div className="flex items-center gap-1.5">
+                              <Clock className="w-3.5 h-3.5 text-gray-300" />
+                              <span>{formattedDate}</span>
+                            </div>
+                          </td>
+
+                          {/* Nombre */}
+                          <td className="px-6 py-4 font-bold text-cemim-dark">
+                            {item.nombre}
+                          </td>
+
+                          {/* Email */}
+                          <td className="px-6 py-4 text-xs">
+                            <a
+                              href={`mailto:${item.email}?subject=Contacto%20CEMIM%20Mangayacu`}
+                              className="inline-flex items-center gap-1.5 text-blue-600 hover:text-blue-800 hover:underline font-semibold"
+                            >
+                              <Mail className="w-3.5 h-3.5" />
+                              <span>{item.email}</span>
+                            </a>
+                          </td>
+
+                          {/* WhatsApp / Teléfono */}
+                          <td className="px-6 py-4 text-xs whitespace-nowrap">
+                            {item.telefono ? (
+                              waUrl ? (
+                                <a
+                                  href={waUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-green-50 text-green-700 hover:bg-green-100 border border-green-200 font-bold transition-colors"
+                                  title="Abrir chat en WhatsApp"
+                                >
+                                  <MessageSquare className="w-3.5 h-3.5 text-green-600" />
+                                  <span>{item.telefono}</span>
+                                  <ExternalLink className="w-3 h-3 text-green-500" />
+                                </a>
+                              ) : (
+                                <span className="text-gray-700">{item.telefono}</span>
+                              )
+                            ) : (
+                              <span className="text-gray-300 italic">No indicado</span>
+                            )}
+                          </td>
+
+                          {/* Interés */}
+                          <td className="px-6 py-4">
+                            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-cemim-green-light text-cemim-green-dark">
+                              {item.interes || 'General'}
+                            </span>
+                          </td>
+
+                          {/* Mensaje */}
+                          <td className="px-6 py-4 text-xs text-gray-600 max-w-xs">
+                            <p className="line-clamp-3" title={item.mensaje}>
+                              {item.mensaje || <span className="italic text-gray-300">Sin mensaje</span>}
+                            </p>
+                          </td>
+
+                          {/* Acciones */}
+                          <td className="px-6 py-4 text-right">
+                            <div className="flex items-center justify-end gap-1.5">
+                              {waUrl && (
+                                <a
+                                  href={waUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="p-2 rounded-lg text-green-600 hover:bg-green-50 transition-colors"
+                                  title="Chatear en WhatsApp"
+                                >
+                                  <MessageSquare className="w-4 h-4" />
+                                </a>
+                              )}
+                              <a
+                                href={`mailto:${item.email}?subject=Contacto%20CEMIM%20Mangayacu`}
+                                className="p-2 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"
+                                title="Enviar correo"
+                              >
+                                <Mail className="w-4 h-4" />
+                              </a>
+                              <button
+                                onClick={() => handleDeleteRegistration(item.id, item.nombre)}
+                                className="p-2 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                                title="Eliminar de la bandeja"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
 
         {/* Modal: Subir Nuevo Recurso */}
         {isModalOpen && (

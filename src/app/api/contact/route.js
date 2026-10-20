@@ -50,10 +50,12 @@ export async function POST(request) {
       }
     }
 
-    // 2. Enviar notificación por correo a cristian.f.jaramillo@gmail.com vía FormSubmit
-    let emailStatus = 'pending';
+    // 2. Intento de notificación FormSubmit con timeout estricto de 3 segundos para no bloquear la respuesta
     try {
-      const emailRes = await fetch(`https://formsubmit.co/ajax/${TARGET_EMAIL}`, {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 3000);
+
+      fetch(`https://formsubmit.co/ajax/${TARGET_EMAIL}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -72,20 +74,19 @@ export async function POST(request) {
           'Área de Interés': interes,
           'Mensaje o Consulta': mensaje || 'Sin mensaje adicional',
           'Fecha de Registro': new Date().toLocaleString('es-EC')
-        })
-      });
-
-      const emailJson = await emailRes.json();
-      emailStatus = emailJson.message || 'sent';
+        }),
+        signal: controller.signal
+      })
+      .then(() => clearTimeout(timer))
+      .catch(() => clearTimeout(timer));
     } catch (mailErr) {
-      console.error('Error enviando notificación por correo:', mailErr);
+      console.error('Notificación mail saltada:', mailErr);
     }
 
     return NextResponse.json({
       success: true,
       message: '¡Tu registro ha sido enviado exitosamente!',
-      data: registration,
-      emailStatus
+      data: registration
     });
   } catch (error) {
     console.error('Error en /api/contact:', error);
@@ -108,6 +109,30 @@ export async function GET() {
     }
     const list = JSON.parse(await fileData.text());
     return NextResponse.json({ success: true, data: list });
+  } catch (err) {
+    return NextResponse.json({ success: false, message: err.message }, { status: 500 });
+  }
+}
+
+export async function DELETE(request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+    if (!id || !url || !serviceKey) {
+      return NextResponse.json({ success: false, message: 'ID de registro requerido' }, { status: 400 });
+    }
+    const supabase = createClient(url, serviceKey);
+    const { data: fileData } = await supabase.storage.from(bucket).download('data/registrations.json');
+    if (fileData) {
+      let list = JSON.parse(await fileData.text());
+      list = list.filter(r => r.id !== id);
+      await supabase.storage.from(bucket).upload('data/registrations.json', Buffer.from(JSON.stringify(list, null, 2)), {
+        contentType: 'application/json',
+        cacheControl: '0',
+        upsert: true
+      });
+    }
+    return NextResponse.json({ success: true, message: 'Registro eliminado correctamente' });
   } catch (err) {
     return NextResponse.json({ success: false, message: err.message }, { status: 500 });
   }
