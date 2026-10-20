@@ -3,7 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { 
   BookOpen, Headphones, Video, Search, Download, Play, Pause, 
-  ExternalLink, FileText, Clock, User, Filter, Sparkles, CheckCircle2 
+  ExternalLink, FileText, Clock, User, Filter, Sparkles, CheckCircle2,
+  ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { getStreamableMediaUrl } from '@/lib/mediaUtils';
 
@@ -46,6 +47,10 @@ export default function RepositorySection({
   // Available categories for current tab
   const categories = ['todos', ...new Set(tabResources.map((r) => r.category).filter(Boolean))];
 
+  // Pagination configuration (strictly 26 items per page)
+  const ITEMS_PER_PAGE = 26;
+  const [currentPage, setCurrentPage] = useState(1);
+
   // Filtered by search & category
   const filtered = tabResources.filter((item) => {
     const matchesCategory = selectedCategory === 'todos' || item.category === selectedCategory;
@@ -57,6 +62,41 @@ export default function RepositorySection({
       item.description?.toLowerCase().includes(q);
     return matchesCategory && matchesSearch;
   });
+
+  // Reset to page 1 whenever activeTab, selectedCategory, or searchQuery changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab, selectedCategory, searchQuery]);
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE) || 1;
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = Math.min(startIndex + ITEMS_PER_PAGE, filtered.length);
+  const paginatedItems = filtered.slice(startIndex, endIndex);
+
+  const handlePageChange = (newPage) => {
+    if (newPage < 1 || newPage > totalPages || newPage === currentPage) return;
+    setCurrentPage(newPage);
+    const elem = document.getElementById('repositorio');
+    if (elem) {
+      elem.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
+  const getPageNumbers = () => {
+    if (totalPages <= 7) {
+      return Array.from({ length: totalPages }, (_, i) => i + 1);
+    }
+    const pages = [];
+    if (currentPage <= 4) {
+      pages.push(1, 2, 3, 4, 5, '...', totalPages);
+    } else if (currentPage >= totalPages - 3) {
+      pages.push(1, '...', totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages);
+    } else {
+      pages.push(1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages);
+    }
+    return pages;
+  };
 
   return (
     <section id="repositorio" className="py-20 bg-cemim-bg scroll-mt-16">
@@ -207,7 +247,7 @@ export default function RepositorySection({
             
             {/* 1. RENDER LIBROS */}
             {activeTab === 'libros' &&
-              filtered.map((book) => (
+              paginatedItems.map((book) => (
                 <div
                   key={book.id}
                   className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col group"
@@ -279,7 +319,7 @@ export default function RepositorySection({
 
             {/* 2. RENDER AUDIOTECA */}
             {activeTab === 'audios' &&
-              filtered.map((audio) => {
+              paginatedItems.map((audio) => {
                 const isPlaying = currentAudioTrack?.id === audio.id;
                 return (
                   <div
@@ -365,7 +405,7 @@ export default function RepositorySection({
 
             {/* 3. RENDER VIDEOS */}
             {activeTab === 'videos' &&
-              filtered.map((video) => (
+              paginatedItems.map((video) => (
                 <div
                   key={video.id}
                   className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col group"
@@ -442,6 +482,73 @@ export default function RepositorySection({
                 </div>
               ))}
 
+          </div>
+        )}
+
+        {/* Numeración Inferior y Controles de Paginación */}
+        {totalPages > 1 && (
+          <div className="mt-14 pt-8 border-t border-gray-200/80 flex flex-col sm:flex-row items-center justify-between gap-5 bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
+            {/* Contador de recursos mostrados */}
+            <div className="text-sm text-gray-500 font-medium text-center sm:text-left">
+              Página <span className="font-black text-cemim-dark">{currentPage}</span> de <span className="font-black text-cemim-dark">{totalPages}</span>
+              <span className="hidden sm:inline text-gray-300 mx-2">|</span>
+              <span className="block sm:inline mt-1 sm:mt-0 text-xs sm:text-sm text-gray-600">
+                Mostrando <span className="font-bold text-cemim-dark">{startIndex + 1}</span> a{' '}
+                <span className="font-bold text-cemim-dark">{endIndex}</span> de{' '}
+                <span className="font-bold text-cemim-dark">{filtered.length}</span>{' '}
+                {activeTab === 'libros' ? 'libros' : activeTab === 'audios' ? 'audios' : 'videos'}
+              </span>
+            </div>
+
+            {/* Botones de navegación de página */}
+            <div className="flex items-center gap-2 flex-wrap justify-center">
+              {/* Botón Anterior */}
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold border transition-all disabled:opacity-40 disabled:cursor-not-allowed bg-white border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 shadow-sm"
+                title="Página anterior"
+              >
+                <ChevronLeft className="w-4 h-4" />
+                <span>Anterior</span>
+              </button>
+
+              {/* Botones numerados */}
+              {getPageNumbers().map((p, idx) => {
+                if (p === '...') {
+                  return (
+                    <span key={`dots-${idx}`} className="px-2 py-1 text-gray-400 text-xs font-bold">
+                      •••
+                    </span>
+                  );
+                }
+                const isActive = p === currentPage;
+                return (
+                  <button
+                    key={p}
+                    onClick={() => handlePageChange(p)}
+                    className={`w-9 h-9 rounded-xl text-xs font-bold transition-all flex items-center justify-center shadow-sm ${
+                      isActive
+                        ? 'bg-cemim-green text-white shadow-cemim-green/30 scale-105 ring-2 ring-cemim-green/20'
+                        : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300'
+                    }`}
+                  >
+                    {p}
+                  </button>
+                );
+              })}
+
+              {/* Botón Siguiente */}
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold border transition-all disabled:opacity-40 disabled:cursor-not-allowed bg-white border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 shadow-sm"
+                title="Página siguiente"
+              >
+                <span>Siguiente</span>
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         )}
 
