@@ -2,6 +2,7 @@
 
 import React, { useState, useRef } from 'react';
 import { Send, CheckCircle2, MessageSquare, Mail, MapPin, Sparkles, Paperclip, X, FileText, Upload, AlertCircle } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 
 export default function ContactSection() {
   const [submitted, setSubmitted] = useState(false);
@@ -35,37 +36,76 @@ export default function ContactSection() {
       return;
     }
 
-    // Validar tamaño máximo recomendado (4.5 MB para subida serverless)
-    if (file.size > 4.5 * 1024 * 1024) {
-      setAttachmentError('El archivo excede el tamaño máximo permitido de 4.5 MB.');
+    // Validar tamaño máximo: 100 MB
+    const MAX_SIZE_BYTES = 100 * 1024 * 1024;
+    if (file.size > MAX_SIZE_BYTES) {
+      setAttachmentError('El archivo excede el tamaño máximo permitido de 100 MB.');
       if (fileInputRef.current) fileInputRef.current.value = '';
       return;
     }
 
+    const formatFileSize = (bytes) => {
+      if (bytes < 1024 * 1024) {
+        return `${Math.round(bytes / 1024)} KB`;
+      }
+      return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+    };
+
     setUploadingAttachment(true);
-    const uploadData = new FormData();
-    uploadData.append('file', file);
-    uploadData.append('folder', 'attachments');
 
     try {
-      const res = await fetch('/api/upload', {
+      // 1. Solicitar URL firmada para subida directa a Supabase Storage (soporta hasta 100 MB directo al storage)
+      const signRes = await fetch('/api/upload/sign', {
         method: 'POST',
-        body: uploadData
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fileName: file.name, folder: 'attachments' })
       });
-      const json = await res.json();
+      const signJson = await signRes.json();
 
-      if (json.success) {
+      if (signJson.success && supabase) {
+        // Subida directa desde el navegador a Supabase Storage sin límite de Vercel
+        const { error: uploadError } = await supabase.storage
+          .from(signJson.bucketName || 'cemim-multimedia')
+          .uploadToSignedUrl(signJson.path, signJson.token, file, {
+            contentType: file.type || 'application/octet-stream'
+          });
+
+        if (uploadError) {
+          throw new Error(uploadError.message);
+        }
+
         setAttachment({
-          url: json.url,
+          url: signJson.publicUrl,
           name: file.name,
-          size: json.fileSize
+          size: formatFileSize(file.size)
         });
         setAttachmentError('');
       } else {
-        setAttachmentError(json.message || 'No se pudo subir el archivo adjunto.');
+        // Fallback por API de servidor para archivos pequeños
+        const uploadData = new FormData();
+        uploadData.append('file', file);
+        uploadData.append('folder', 'attachments');
+
+        const fallbackRes = await fetch('/api/upload', {
+          method: 'POST',
+          body: uploadData
+        });
+        const fallbackJson = await fallbackRes.json();
+
+        if (fallbackJson.success) {
+          setAttachment({
+            url: fallbackJson.url,
+            name: file.name,
+            size: fallbackJson.fileSize || formatFileSize(file.size)
+          });
+          setAttachmentError('');
+        } else {
+          setAttachmentError(fallbackJson.message || 'No se pudo subir el archivo adjunto.');
+        }
       }
     } catch (err) {
-      setAttachmentError('Error de conexión al cargar el archivo adjunto.');
+      console.error('Error al subir adjunto:', err);
+      setAttachmentError('Error al subir el archivo: ' + (err.message || 'Verifica tu conexión.'));
     } finally {
       setUploadingAttachment(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -348,7 +388,7 @@ export default function ContactSection() {
                         <span>Haz clic para seleccionar un archivo</span>
                       </div>
                       <p className="text-[11px] text-gray-400 mt-1">
-                        Formatos: .doc, .pdf, .jpg, .png, .mp3, .mp4 (hasta 4.5 MB)
+                        Formatos: .doc, .pdf, .jpg, .png, .mp3, .mp4 (hasta 100 MB)
                       </p>
                       <input
                         ref={fileInputRef}

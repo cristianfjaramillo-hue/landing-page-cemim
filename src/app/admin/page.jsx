@@ -8,6 +8,7 @@ import {
   MessageSquare, Phone, ExternalLink, Inbox, Users, Download, Paperclip
 } from 'lucide-react';
 import { getStreamableMediaUrl } from '@/lib/mediaUtils';
+import { supabase } from '@/lib/supabase';
 
 export default function AdminPage() {
   // Authentication State
@@ -178,47 +179,82 @@ export default function AdminPage() {
     setIsModalOpen(true);
   };
 
-  // Upload file helper
+  // Upload file helper (soporta hasta 100 MB mediante subida directa firmada a Supabase)
   const handleFileUpload = async (e, fieldName) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     setUploadingFile(true);
-    const data = new FormData();
-    data.append('file', file);
 
     try {
-      const res = await fetch('/api/upload', {
-        method: 'POST',
-        body: data
-      });
-      const json = await res.json();
+      let finalUrl = '';
+      let finalSize = file.size < 1024 * 1024 
+        ? `${Math.round(file.size / 1024)} KB` 
+        : `${(file.size / (1024 * 1024)).toFixed(1)} MB`;
 
-      if (json.success) {
-        if (fieldName === 'fileUrl') {
-          setUploadedFileName(file.name);
-          const cleanTitle = file.name
-            .replace(/\.[^/.]+$/, "")
-            .replace(/^[0-9]+[\._\s-]*/, "")
-            .replace(/[_-]+/g, " ")
-            .trim();
+      // 1. Intentar subida directa firmada a Supabase Storage (permite hasta 100 MB)
+      try {
+        const signRes = await fetch('/api/upload/sign', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fileName: file.name, folder: 'uploads' })
+        });
+        const signData = await signRes.json();
 
-          setFormData((prev) => ({
-            ...prev,
-            fileUrl: json.url,
-            fileSize: json.fileSize,
-            title: prev.title.trim() ? prev.title : (cleanTitle || file.name)
-          }));
-        } else if (fieldName === 'coverUrl') {
-          setFormData((prev) => ({
-            ...prev,
-            coverUrl: json.url
-          }));
+        if (signData.success && supabase) {
+          const { error: uploadError } = await supabase.storage
+            .from(signData.bucketName || 'cemim-multimedia')
+            .uploadToSignedUrl(signData.path, signData.token, file, {
+              contentType: file.type || 'application/octet-stream'
+            });
+
+          if (!uploadError) {
+            finalUrl = signData.publicUrl;
+          }
         }
-        showNotification('✓ Archivo cargado exitosamente en la nube', 'success');
-      } else {
-        showNotification('❌ Error al subir: ' + json.message, 'error');
+      } catch (signErr) {
+        console.warn('Subida firmada no completada, intentando fallback tradicional:', signErr);
       }
+
+      // 2. Fallback por si la subida firmada no se completó
+      if (!finalUrl) {
+        const data = new FormData();
+        data.append('file', file);
+        const res = await fetch('/api/upload', {
+          method: 'POST',
+          body: data
+        });
+        const json = await res.json();
+        if (json.success) {
+          finalUrl = json.url;
+          finalSize = json.fileSize || finalSize;
+        } else {
+          showNotification('❌ Error al subir: ' + json.message, 'error');
+          return;
+        }
+      }
+
+      if (fieldName === 'fileUrl') {
+        setUploadedFileName(file.name);
+        const cleanTitle = file.name
+          .replace(/\.[^/.]+$/, "")
+          .replace(/^[0-9]+[\._\s-]*/, "")
+          .replace(/[_-]+/g, " ")
+          .trim();
+
+        setFormData((prev) => ({
+          ...prev,
+          fileUrl: finalUrl,
+          fileSize: finalSize,
+          title: prev.title.trim() ? prev.title : (cleanTitle || file.name)
+        }));
+      } else if (fieldName === 'coverUrl') {
+        setFormData((prev) => ({
+          ...prev,
+          coverUrl: finalUrl
+        }));
+      }
+      showNotification('✓ Archivo cargado exitosamente en la nube', 'success');
     } catch (err) {
       showNotification('❌ Error de red al contactar el servidor de carga', 'error');
     } finally {
