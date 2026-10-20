@@ -73,7 +73,9 @@ export default function Footer() {
               </li>
               <li className="flex items-center gap-2.5">
                 <Mail className="w-4 h-4 text-cemim-green flex-shrink-0" />
-                <span>contacto@cemim.org</span>
+                <a href="mailto:cristian.f.jaramillo@gmail.com" className="hover:text-cemim-green transition-colors">
+                  cristian.f.jaramillo@gmail.com
+                </a>
               </li>
               <li className="flex items-center gap-2.5">
                 <Phone className="w-4 h-4 text-cemim-green flex-shrink-0" />

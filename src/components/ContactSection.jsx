@@ -5,6 +5,8 @@ import { Send, CheckCircle2, MessageSquare, Mail, MapPin, Sparkles } from 'lucid
 
 export default function ContactSection() {
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
   const [formData, setFormData] = useState({
     nombre: '',
     email: '',
@@ -13,10 +15,35 @@ export default function ContactSection() {
     mensaje: ''
   });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setSubmitted(true);
-    // In production, send email or save in Supabase table
+    setLoading(true);
+    setErrorMsg('');
+
+    try {
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSubmitted(true);
+        setFormData({
+          nombre: '',
+          email: '',
+          telefono: '',
+          interes: 'Entrenamiento Misionero Integral',
+          mensaje: ''
+        });
+      } else {
+        setErrorMsg(data.message || 'Error al enviar la solicitud. Intenta nuevamente.');
+      }
+    } catch (err) {
+      setErrorMsg('Error de red al procesar el envío. Verifica tu conexión.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -55,9 +82,9 @@ export default function ContactSection() {
                 <Mail className="w-5 h-5 text-cemim-green flex-shrink-0 mt-1" />
                 <div>
                   <h4 className="text-sm font-bold text-cemim-dark">Correo Electrónico</h4>
-                  <p className="text-xs text-gray-600 mt-0.5">
-                    contacto@cemim.org • admisiones@cemim.org
-                  </p>
+                  <a href="mailto:cristian.f.jaramillo@gmail.com" className="text-xs text-cemim-green hover:underline font-semibold mt-0.5 block">
+                    cristian.f.jaramillo@gmail.com
+                  </a>
                 </div>
               </div>
 
@@ -173,12 +200,28 @@ export default function ContactSection() {
                   />
                 </div>
 
+                {errorMsg && (
+                  <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-xs text-red-700 font-medium">
+                    {errorMsg}
+                  </div>
+                )}
+
                 <button
                   type="submit"
-                  className="w-full inline-flex items-center justify-center gap-2 px-6 py-4 rounded-xl bg-cemim-green hover:bg-cemim-green-hover text-white text-sm font-bold shadow-md hover:shadow-lg transition-all"
+                  disabled={loading}
+                  className="w-full inline-flex items-center justify-center gap-2 px-6 py-4 rounded-xl bg-cemim-green hover:bg-cemim-green-hover text-white text-sm font-bold shadow-md hover:shadow-lg transition-all disabled:opacity-60"
                 >
-                  <Send className="w-4 h-4" />
-                  Enviar Solicitud
+                  {loading ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <span>Enviando Solicitud...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-4 h-4" />
+                      <span>Enviar Solicitud</span>
+                    </>
+                  )}
                 </button>
               </form>
             )}
