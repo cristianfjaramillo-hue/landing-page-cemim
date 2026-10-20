@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getAllResources, addResource, deleteResourceById } from '@/lib/resourceStore';
+import { getStreamableMediaUrl } from '@/lib/mediaUtils';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -47,17 +48,19 @@ export async function POST(request) {
       );
     }
 
+    const streamableUrl = getStreamableMediaUrl(body.fileUrl);
+
     const created = await addResource({
       title: body.title,
       type: body.type, // 'libro' | 'audio' | 'video'
       author: body.author || 'CEMIM Mangayacu',
       category: body.category || 'General',
       description: body.description || '',
-      fileUrl: body.fileUrl,
+      fileUrl: streamableUrl,
       coverUrl: body.coverUrl || 'https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&w=800&q=80',
-      duration: body.duration || (body.type === 'audio' ? '5:00' : body.type === 'video' ? '10:00' : null),
+      duration: body.duration?.trim() ? body.duration.trim() : null,
       pages: body.pages ? parseInt(body.pages, 10) : null,
-      fileSize: body.fileSize || '5.0 MB'
+      fileSize: body.fileSize || (body.type === 'libro' ? 'Archivo PDF' : body.type === 'audio' ? 'Audio MP3' : 'Video')
     });
 
     return NextResponse.json({ success: true, data: created });

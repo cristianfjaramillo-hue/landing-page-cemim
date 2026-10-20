@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Play, Pause, Volume2, VolumeX, Download, X, Headphones, Disc } from 'lucide-react';
+import { Play, Pause, Volume2, VolumeX, Download, X, Headphones, Disc, AlertCircle } from 'lucide-react';
+import { getStreamableMediaUrl } from '@/lib/mediaUtils';
 
 export default function AudioPlayer({ track, onClose }) {
   const audioRef = useRef(null);
@@ -10,10 +11,13 @@ export default function AudioPlayer({ track, onClose }) {
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(0.85);
   const [isMuted, setIsMuted] = useState(false);
+  const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
     if (track && audioRef.current) {
-      audioRef.current.src = track.fileUrl;
+      setHasError(false);
+      const streamUrl = getStreamableMediaUrl(track.fileUrl);
+      audioRef.current.src = streamUrl;
       audioRef.current.load();
       audioRef.current.play().then(() => {
         setIsPlaying(true);
@@ -30,16 +34,35 @@ export default function AudioPlayer({ track, onClose }) {
       audioRef.current.pause();
       setIsPlaying(false);
     } else {
-      audioRef.current.play();
-      setIsPlaying(true);
+      audioRef.current.play().then(() => {
+        setIsPlaying(true);
+        setHasError(false);
+      }).catch((e) => {
+        console.error('Error al reproducir audio:', e);
+        setIsPlaying(false);
+      });
     }
   };
 
   const onTimeUpdate = () => {
     if (audioRef.current) {
       setCurrentTime(audioRef.current.currentTime);
-      setDuration(audioRef.current.duration || 0);
+      if (audioRef.current.duration && !isNaN(audioRef.current.duration) && isFinite(audioRef.current.duration)) {
+        setDuration(audioRef.current.duration);
+      }
     }
+  };
+
+  const onLoadedMetadata = () => {
+    if (audioRef.current && audioRef.current.duration && !isNaN(audioRef.current.duration) && isFinite(audioRef.current.duration)) {
+      setDuration(audioRef.current.duration);
+    }
+  };
+
+  const onError = () => {
+    console.error('Error al cargar stream de audio.');
+    setHasError(true);
+    setIsPlaying(false);
   };
 
   const handleSeek = (e) => {
@@ -71,21 +94,30 @@ export default function AudioPlayer({ track, onClose }) {
   };
 
   const formatTime = (secs) => {
-    if (isNaN(secs)) return '0:00';
-    const mins = Math.floor(secs / 60);
-    const rem = Math.floor(secs % 60);
+    if (isNaN(secs) || !isFinite(secs) || secs < 0) return '0:00';
+    const totalSecs = Math.floor(secs);
+    const hours = Math.floor(totalSecs / 3600);
+    const mins = Math.floor((totalSecs % 3600) / 60);
+    const rem = totalSecs % 60;
+    if (hours > 0) {
+      return `${hours}:${mins < 10 ? '0' : ''}${mins}:${rem < 10 ? '0' : ''}${rem}`;
+    }
     return `${mins}:${rem < 10 ? '0' : ''}${rem}`;
   };
 
   if (!track) return null;
+
+  const downloadUrl = getStreamableMediaUrl(track.fileUrl);
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 bg-cemim-dark text-white border-t border-gray-800 shadow-2xl px-4 py-3 sm:px-6 transition-all animate-slideUp">
       <audio
         ref={audioRef}
         onTimeUpdate={onTimeUpdate}
+        onLoadedMetadata={onLoadedMetadata}
+        onError={onError}
         onEnded={() => setIsPlaying(false)}
-        preload="metadata"
+        preload="auto"
       />
 
       <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-6">
@@ -117,6 +149,11 @@ export default function AudioPlayer({ track, onClose }) {
             >
               {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5 ml-0.5" />}
             </button>
+            {hasError && (
+              <span className="text-xs text-amber-400 flex items-center gap-1">
+                <AlertCircle className="w-3.5 h-3.5" /> Reintentando conexión...
+              </span>
+            )}
           </div>
 
           <div className="w-full flex items-center gap-3 text-xs text-gray-400">
@@ -152,8 +189,8 @@ export default function AudioPlayer({ track, onClose }) {
 
           {/* Download Button */}
           <a
-            href={track.fileUrl}
-            download={track.title}
+            href={downloadUrl}
+            download={`${track.title}.mp3`}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-cemim-green hover:text-white text-gray-200 text-xs font-medium transition-all"

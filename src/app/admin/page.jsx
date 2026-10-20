@@ -4,8 +4,9 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { 
   ShieldCheck, Lock, Mail, Upload, Trash2, Plus, LogOut, 
-  BookOpen, Headphones, Video, CheckCircle2, AlertCircle, Eye, RefreshCw, FileText
+  BookOpen, Headphones, Video, CheckCircle2, AlertCircle, Eye, RefreshCw, FileText, Clock
 } from 'lucide-react';
+import { getStreamableMediaUrl } from '@/lib/mediaUtils';
 
 export default function AdminPage() {
   // Authentication State
@@ -182,10 +183,11 @@ export default function AdminPage() {
     setSavingResource(true);
 
     try {
+      const normalizedUrl = getStreamableMediaUrl(formData.fileUrl);
       const res = await fetch('/api/admin/resources', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+        body: JSON.stringify({ ...formData, fileUrl: normalizedUrl })
       });
       const json = await res.json();
 
@@ -641,6 +643,52 @@ export default function AdminPage() {
                   </div>
                 </div>
 
+                {/* Specific Fields depending on Type (Duration for Audio/Video, Pages for Book) */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {(formData.type === 'audio' || formData.type === 'video') && (
+                    <div>
+                      <label className="block text-xs font-bold uppercase text-gray-600 mb-1">
+                        Duración del {formData.type === 'audio' ? 'Audio' : 'Video'} (opcional)
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.duration}
+                        onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
+                        placeholder="Ej. 1h 13m o 35:20"
+                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-cemim-green/30 focus:border-cemim-green"
+                      />
+                    </div>
+                  )}
+
+                  {formData.type === 'libro' && (
+                    <div>
+                      <label className="block text-xs font-bold uppercase text-gray-600 mb-1">
+                        Número de Páginas (opcional)
+                      </label>
+                      <input
+                        type="number"
+                        value={formData.pages}
+                        onChange={(e) => setFormData({ ...formData, pages: e.target.value })}
+                        placeholder="Ej. 120"
+                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-cemim-green/30 focus:border-cemim-green"
+                      />
+                    </div>
+                  )}
+
+                  <div>
+                    <label className="block text-xs font-bold uppercase text-gray-600 mb-1">
+                      Tamaño aproximado (opcional)
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.fileSize}
+                      onChange={(e) => setFormData({ ...formData, fileSize: e.target.value })}
+                      placeholder="Ej. 65 MB o 134 MB"
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-cemim-green/30 focus:border-cemim-green"
+                    />
+                  </div>
+                </div>
+
                 {/* Description */}
                 <div>
                   <label className="block text-xs font-bold uppercase text-gray-600 mb-1">
@@ -758,7 +806,14 @@ export default function AdminPage() {
                         type="text"
                         value={formData.fileUrl}
                         onChange={(e) => setFormData({ ...formData, fileUrl: e.target.value })}
-                        placeholder="https://... Enlace directo o URL del archivo"
+                        onBlur={(e) => {
+                          const normalized = getStreamableMediaUrl(e.target.value);
+                          if (normalized && normalized !== e.target.value) {
+                            setFormData((prev) => ({ ...prev, fileUrl: normalized }));
+                            showNotification('✓ Enlace de Google Drive optimizado para reproducción directa', 'success');
+                          }
+                        }}
+                        placeholder="https://... Enlace directo o enlace de Google Drive"
                         className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-xs focus:outline-none focus:ring-2 focus:ring-cemim-green/30"
                       />
                     </div>

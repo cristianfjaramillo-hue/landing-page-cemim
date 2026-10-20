@@ -2,9 +2,13 @@
 
 import React from 'react';
 import { X, Download, Share2, Film } from 'lucide-react';
+import { getStreamableMediaUrl, getDriveEmbedUrl } from '@/lib/mediaUtils';
 
 export default function VideoModal({ video, onClose }) {
   if (!video) return null;
+
+  const streamUrl = getStreamableMediaUrl(video.fileUrl);
+  const driveEmbed = getDriveEmbedUrl(video.fileUrl);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
@@ -28,15 +32,24 @@ export default function VideoModal({ video, onClose }) {
 
         {/* Video Player */}
         <div className="relative bg-black aspect-video w-full flex items-center justify-center">
-          <video
-            src={video.fileUrl}
-            controls
-            autoPlay
-            className="w-full h-full object-contain"
-            poster={video.coverUrl}
-          >
-            Tu navegador no soporta la reproducción de video HTML5.
-          </video>
+          {driveEmbed ? (
+            <iframe
+              src={driveEmbed}
+              className="w-full h-full border-0"
+              allow="autoplay; encrypted-media"
+              allowFullScreen
+            />
+          ) : (
+            <video
+              src={streamUrl}
+              controls
+              autoPlay
+              className="w-full h-full object-contain"
+              poster={video.coverUrl}
+            >
+              Tu navegador no soporta la reproducción de video HTML5.
+            </video>
+          )}
         </div>
 
         {/* Details & Actions */}
