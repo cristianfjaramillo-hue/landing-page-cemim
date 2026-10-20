@@ -518,5 +518,33 @@ export const initialResources = [
     "fileSize": "0.05 MB",
     "pages": 16,
     "createdAt": "2026-04-20"
+  },
+  {
+    "id": "audio-cemim-1MCDl0e57rHSAI-OyDQyoH-9xapgit0B5",
+    "driveId": "1MCDl0e57rHSAI-OyDQyoH-9xapgit0B5",
+    "type": "audio",
+    "title": "La Historia de JOB: La Prueba de Fe Más Grande del Antiguo Testamento",
+    "author": "CEMIM Mangayacu - Audioteca Misionera",
+    "category": "Historias Bíblicas",
+    "description": "Relato en audio narrado para edificación espiritual, estudio bíblico y reflexión en la fe: La Historia de JOB: La Prueba de Fe Más Grande del Antiguo Testamento.",
+    "duration": "155h 50m",
+    "fileSize": "8560.2 MB",
+    "fileUrl": "https://drive.usercontent.google.com/download?id=1MCDl0e57rHSAI-OyDQyoH-9xapgit0B5&export=download&confirm=t",
+    "coverUrl": "https://images.unsplash.com/photo-1511497584788-87676104235f?auto=format&fit=crop&w=800&q=80",
+    "createdAt": "2026-10-20"
+  },
+  {
+    "id": "audio-cemim-1BO-JQJD7BQX9LrjrERbdEzz5eA7ReTXG",
+    "driveId": "1BO-JQJD7BQX9LrjrERbdEzz5eA7ReTXG",
+    "type": "audio",
+    "title": "La Increíble Historia de ENOC: El Hombre que Fue LLEVADO por Dios Historia Bíblica Impactante",
+    "author": "CEMIM Mangayacu - Audioteca Misionera",
+    "category": "Historias Bíblicas",
+    "description": "Relato en audio narrado para edificación espiritual, estudio bíblico y reflexión en la fe: La Increíble Historia de ENOC: El Hombre que Fue LLEVADO por Dios Historia Bíblica Impactante.",
+    "duration": "155h 50m",
+    "fileSize": "8560.2 MB",
+    "fileUrl": "https://drive.usercontent.google.com/download?id=1BO-JQJD7BQX9LrjrERbdEzz5eA7ReTXG&export=download&confirm=t",
+    "coverUrl": "https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=800&q=80",
+    "createdAt": "2026-10-20"
   }
 ];
