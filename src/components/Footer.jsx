@@ -110,7 +110,7 @@ export default function Footer() {
 
         {/* Bottom Bar */}
         <div className="mt-12 pt-8 border-t border-gray-800 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-gray-500">
-          <p>© {new Date().getFullYear()} CEMIM. Todos los derechos reservados.</p>
+          <p>© {new Date().getFullYear()} NOMADAS AGENCIA DE DISEÑO Y MARKETING DIGITAL. Todos los derechos reservados.</p>
           <p className="flex items-center gap-1">
             Dedicado a la gloria de Dios y al avance misionero en las naciones.
           </p>
