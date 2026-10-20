@@ -98,6 +98,25 @@ export default function AdminPage() {
     }
   };
 
+  // Open clean modal
+  const openNewResourceModal = () => {
+    setUploadedFileName('');
+    setFileSourceMode('upload');
+    setFormData({
+      title: '',
+      type: 'libro',
+      author: 'CEMIM Mangayacu',
+      category: 'Misiones',
+      description: '',
+      fileUrl: '',
+      coverUrl: '',
+      pages: '',
+      duration: '',
+      fileSize: ''
+    });
+    setIsModalOpen(true);
+  };
+
   // Upload file helper
   const handleFileUpload = async (e, fieldName) => {
     const file = e.target.files?.[0];
@@ -117,11 +136,17 @@ export default function AdminPage() {
       if (json.success) {
         if (fieldName === 'fileUrl') {
           setUploadedFileName(file.name);
+          const cleanTitle = file.name
+            .replace(/\.[^/.]+$/, "")
+            .replace(/^[0-9]+[\._\s-]*/, "")
+            .replace(/[_-]+/g, " ")
+            .trim();
+
           setFormData((prev) => ({
             ...prev,
             fileUrl: json.url,
             fileSize: json.fileSize,
-            title: prev.title || file.name.replace(/\.[^/.]+$/, "").replace(/_/g, " ")
+            title: prev.title.trim() ? prev.title : (cleanTitle || file.name)
           }));
         } else if (fieldName === 'coverUrl') {
           setFormData((prev) => ({
@@ -137,6 +162,7 @@ export default function AdminPage() {
       showNotification('❌ Error de red al contactar el servidor de carga', 'error');
     } finally {
       setUploadingFile(false);
+      if (e.target) e.target.value = '';
     }
   };
 
@@ -144,7 +170,7 @@ export default function AdminPage() {
     e.preventDefault();
 
     if (uploadingFile) {
-      showNotification('El archivo todavía se está cargando a la nube, por favor espera un momento...', 'error');
+      showNotification('El archivo todavía se está subiendo a la nube, por favor espera un momento...', 'error');
       return;
     }
 
@@ -167,18 +193,11 @@ export default function AdminPage() {
         showNotification('¡Recurso publicado exitosamente en el repositorio!', 'success');
         setIsModalOpen(false);
         setUploadedFileName('');
-        setFormData({
-          title: '',
-          type: 'libro',
-          author: '',
-          category: 'Misiones',
-          description: '',
-          fileUrl: '',
-          coverUrl: '',
-          pages: '',
-          duration: '',
-          fileSize: ''
-        });
+        
+        // Optimistic update
+        if (json.data) {
+          setResources((prev) => [json.data, ...prev.filter(r => r.id !== json.data.id)]);
+        }
         fetchResources();
       } else {
         showNotification(json.message || 'Error al guardar el recurso', 'error');
@@ -194,6 +213,9 @@ export default function AdminPage() {
     const confirmDelete = window.confirm(`¿Estás seguro de que deseas eliminar permanentemente el recurso "${title}"?`);
     if (!confirmDelete) return;
 
+    // Optimistically remove from list immediately
+    setResources((prev) => prev.filter((r) => r.id !== id));
+
     try {
       const res = await fetch(`/api/admin/resources?id=${encodeURIComponent(id)}`, {
         method: 'DELETE'
@@ -202,12 +224,18 @@ export default function AdminPage() {
 
       if (json.success) {
         showNotification('Recurso eliminado correctamente', 'success');
-        fetchResources();
+        if (Array.isArray(json.data)) {
+          setResources(json.data);
+        } else {
+          fetchResources();
+        }
       } else {
         showNotification('Error al eliminar: ' + json.message, 'error');
+        fetchResources();
       }
     } catch (err) {
       showNotification('Error de conexión al eliminar recurso', 'error');
+      fetchResources();
     }
   };
 
@@ -340,7 +368,7 @@ export default function AdminPage() {
 
           <div className="flex items-center gap-3">
             <button
-              onClick={() => setIsModalOpen(true)}
+              onClick={openNewResourceModal}
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-cemim-green hover:bg-cemim-green-hover text-white text-sm font-bold shadow-md hover:shadow-lg transition-all"
             >
               <Plus className="w-4 h-4" />
@@ -670,14 +698,26 @@ export default function AdminPage() {
                               </p>
                             </div>
                           </div>
-                          <label className="cursor-pointer text-xs font-bold text-cemim-green hover:underline ml-4 flex-shrink-0">
-                            Cambiar archivo
-                            <input
-                              type="file"
-                              className="hidden"
-                              onChange={(e) => handleFileUpload(e, 'fileUrl')}
-                            />
-                          </label>
+                          <div className="flex items-center gap-3 ml-4 flex-shrink-0">
+                            <label className="cursor-pointer text-xs font-bold text-cemim-green hover:underline">
+                              Cambiar archivo
+                              <input
+                                type="file"
+                                className="hidden"
+                                onChange={(e) => handleFileUpload(e, 'fileUrl')}
+                              />
+                            </label>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setUploadedFileName('');
+                                setFormData((prev) => ({ ...prev, fileUrl: '', fileSize: '' }));
+                              }}
+                              className="text-xs font-bold text-red-500 hover:underline"
+                            >
+                              Quitar
+                            </button>
+                          </div>
                         </div>
                       ) : (
                         <label className={`cursor-pointer flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-2xl transition-all ${

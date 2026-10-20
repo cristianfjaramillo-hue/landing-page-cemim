@@ -17,6 +17,9 @@ build/
 dist/
 
 # Vercel
+# Root temporary scripts
+/*.cjs
+
 .vercel
 
 # Logs
@@ -28,5 +31,8 @@ pnpm-debug.log*
 # OS files
 .DS_Store
 Thumbs.db
+
+# Root temporary scripts
+/*.cjs
 
 .vercel

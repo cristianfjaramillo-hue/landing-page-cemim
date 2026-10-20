@@ -23,6 +23,20 @@ export async function POST(request) {
     const safeName = `${Date.now()}_${cleanFileName}`;
     const fileSizeFormatted = `${(file.size / (1024 * 1024)).toFixed(2)} MB`;
 
+    // Determine accurate MIME type
+    const ext = path.extname(file.name).toLowerCase();
+    let mimeType = file.type;
+    if (!mimeType || mimeType === 'application/octet-stream') {
+      if (ext === '.pdf') mimeType = 'application/pdf';
+      else if (ext === '.mp3') mimeType = 'audio/mpeg';
+      else if (ext === '.wav') mimeType = 'audio/wav';
+      else if (ext === '.mp4') mimeType = 'video/mp4';
+      else if (ext === '.jpg' || ext === '.jpeg') mimeType = 'image/jpeg';
+      else if (ext === '.png') mimeType = 'image/png';
+      else if (ext === '.webp') mimeType = 'image/webp';
+      else mimeType = 'application/octet-stream';
+    }
+
     // 1. Upload to Supabase Storage if configured
     if (supabaseAdmin) {
       try {
@@ -31,7 +45,8 @@ export async function POST(request) {
         let uploadRes = await supabaseAdmin.storage
           .from(bucketName)
           .upload(`uploads/${safeName}`, buffer, {
-            contentType: file.type || 'application/octet-stream',
+            contentType: mimeType,
+            cacheControl: '31536000',
             upsert: true
           });
 
@@ -43,7 +58,8 @@ export async function POST(request) {
             uploadRes = await supabaseAdmin.storage
               .from(bucketName)
               .upload(`uploads/${safeName}`, buffer, {
-                contentType: file.type || 'application/octet-stream',
+                contentType: mimeType,
+                cacheControl: '31536000',
                 upsert: true
               });
           } catch (createErr) {
