@@ -172,12 +172,34 @@ export default function RepositorySection({
             <p className="mt-4 text-sm text-gray-500 font-medium">Cargando recursos multimedia...</p>
           </div>
         ) : filtered.length === 0 ? (
-          <div className="text-center py-16 bg-white rounded-2xl border border-gray-200 p-8">
-            <div className="w-12 h-12 rounded-full bg-gray-100 text-gray-400 flex items-center justify-center mx-auto mb-3">
-              <Search className="w-6 h-6" />
+          <div className="text-center py-16 bg-white rounded-2xl border border-gray-200 p-8 max-w-xl mx-auto shadow-sm">
+            <div className="w-14 h-14 rounded-2xl bg-gray-50 flex items-center justify-center mx-auto mb-3 border border-gray-100">
+              {activeTab === 'audios' ? (
+                <Headphones className="w-7 h-7 text-cemim-green" />
+              ) : activeTab === 'videos' ? (
+                <Video className="w-7 h-7 text-red-500" />
+              ) : (
+                <Search className="w-7 h-7 text-gray-400" />
+              )}
             </div>
-            <h3 className="text-lg font-bold text-gray-800">No se encontraron resultados</h3>
-            <p className="text-sm text-gray-500 mt-1">Prueba ajustando los términos de búsqueda o cambiando de categoría.</p>
+            <h3 className="text-lg font-bold text-gray-800">
+              {searchQuery
+                ? 'No se encontraron resultados'
+                : activeTab === 'audios'
+                ? 'Audioteca en preparación'
+                : activeTab === 'videos'
+                ? 'Sección de Videos en preparación'
+                : 'No se encontraron libros'}
+            </h3>
+            <p className="text-sm text-gray-500 mt-2 leading-relaxed">
+              {searchQuery
+                ? 'Prueba ajustando los términos de búsqueda o cambiando de categoría.'
+                : activeTab === 'audios'
+                ? 'Aún no se han publicado pistas ni cuentos en audio. Próximamente se integrarán nuevas historias sonoras.'
+                : activeTab === 'videos'
+                ? 'Aún no se han publicado videos ni documentales. Próximamente se integrarán producciones audiovisuales.'
+                : 'Próximamente se integrarán nuevos títulos.'}
+            </p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
