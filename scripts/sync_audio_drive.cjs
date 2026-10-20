@@ -137,8 +137,19 @@ async function syncAudioLibrary() {
 
     // High performance direct stream URL with open CORS and unlimited length
     const streamUrl = `https://drive.usercontent.google.com/download?id=${da.id}&export=download&confirm=t`;
-    const sizeMb = `${(da.sizeBytes / (1024 * 1024)).toFixed(1)} MB`;
-    const duration = estimateDuration(da.sizeBytes);
+    
+    // Get exact file size via HEAD request
+    let sizeMb = '50.0 MB';
+    let duration = '45:00';
+    try {
+      const headRes = await fetch(streamUrl, { method: 'HEAD' });
+      const cLength = headRes.headers.get('content-length');
+      if (cLength) {
+        const bytes = parseInt(cLength, 10);
+        sizeMb = `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+        duration = estimateDuration(bytes);
+      }
+    } catch (e) {}
     const coverUrl = AUDIO_COVERS[(existingAudios.length + newAudios.length) % AUDIO_COVERS.length];
 
     const audioItem = {
