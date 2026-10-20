@@ -1,13 +1,16 @@
 import { NextResponse } from 'next/server';
 import { getAllResources, addResource, deleteResourceById } from '@/lib/resourceStore';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
     const type = searchParams.get('type');
     const search = searchParams.get('search');
 
-    let list = getAllResources();
+    let list = await getAllResources();
 
     if (type && type !== 'todos') {
       list = list.filter((item) => item.type === type);
@@ -27,7 +30,7 @@ export async function GET(request) {
     return NextResponse.json({ success: true, data: list });
   } catch (error) {
     return NextResponse.json(
-      { success: false, message: 'Error al obtener recursos' },
+      { success: false, message: 'Error al obtener recursos: ' + error.message },
       { status: 500 }
     );
   }
@@ -44,7 +47,7 @@ export async function POST(request) {
       );
     }
 
-    const created = addResource({
+    const created = await addResource({
       title: body.title,
       type: body.type, // 'libro' | 'audio' | 'video'
       author: body.author || 'CEMIM Mangayacu',
@@ -60,7 +63,7 @@ export async function POST(request) {
     return NextResponse.json({ success: true, data: created });
   } catch (error) {
     return NextResponse.json(
-      { success: false, message: 'Error al guardar el recurso' },
+      { success: false, message: 'Error al guardar el recurso: ' + error.message },
       { status: 500 }
     );
   }
@@ -78,7 +81,7 @@ export async function DELETE(request) {
       );
     }
 
-    const updated = deleteResourceById(id);
+    const updated = await deleteResourceById(id);
     return NextResponse.json({
       success: true,
       message: 'Recurso eliminado correctamente',
@@ -86,7 +89,7 @@ export async function DELETE(request) {
     });
   } catch (error) {
     return NextResponse.json(
-      { success: false, message: 'Error al eliminar el recurso' },
+      { success: false, message: 'Error al eliminar el recurso: ' + error.message },
       { status: 500 }
     );
   }

@@ -22,7 +22,7 @@ export default function RepositorySection({
   const loadResources = async () => {
     try {
       setLoading(true);
-      const res = await fetch('/api/admin/resources');
+      const res = await fetch(`/api/admin/resources?t=${Date.now()}`, { cache: 'no-store' });
       const json = await res.json();
       if (json.success && Array.isArray(json.data)) {
         setResources(json.data);
