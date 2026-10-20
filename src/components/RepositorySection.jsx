@@ -6,7 +6,7 @@ import {
   ExternalLink, FileText, Clock, User, Filter, Sparkles, CheckCircle2,
   ChevronLeft, ChevronRight
 } from 'lucide-react';
-import { getStreamableMediaUrl } from '@/lib/mediaUtils';
+import { getStreamableMediaUrl, getDownloadUrl } from '@/lib/mediaUtils';
 
 export default function RepositorySection({ 
   onPlayAudio, 
@@ -302,11 +302,9 @@ export default function RepositorySection({
                         Leer Detalles
                       </button>
                       <a
-                        href={book.fileUrl}
-                        download={book.title}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-cemim-green hover:bg-cemim-green-hover text-white text-xs font-bold transition-all shadow-sm"
+                        href={getDownloadUrl(book.fileUrl, book.title, 'pdf')}
+                        download={`${book.title}.pdf`}
+                        className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-cemim-green hover:bg-cemim-green-hover text-white text-xs font-bold transition-all shadow-sm cursor-pointer"
                         title="Descargar libro en PDF"
                       >
                         <Download className="w-3.5 h-3.5" />
@@ -387,11 +385,9 @@ export default function RepositorySection({
                           {isPlaying ? 'Escuchando...' : 'Reproducir'}
                         </button>
                         <a
-                          href={getStreamableMediaUrl(audio.fileUrl)}
-                          download={audio.title}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold transition-colors"
+                          href={getDownloadUrl(audio.fileUrl, audio.title, 'mp3')}
+                          download={`${audio.title}.mp3`}
+                          className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold transition-colors cursor-pointer"
                           title="Descargar audio MP3"
                         >
                           <Download className="w-3.5 h-3.5" />

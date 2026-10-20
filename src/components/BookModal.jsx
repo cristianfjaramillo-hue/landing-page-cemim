@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { X, Download, BookOpen, FileText, CheckCircle2 } from 'lucide-react';
+import { getDownloadUrl } from '@/lib/mediaUtils';
 
 export default function BookModal({ book, onClose }) {
   if (!book) return null;
@@ -82,11 +83,9 @@ export default function BookModal({ book, onClose }) {
               {/* Actions */}
               <div className="pt-6 flex flex-col sm:flex-row gap-3">
                 <a
-                  href={book.fileUrl}
-                  download={book.title}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex-1 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-cemim-green hover:bg-cemim-green-hover text-white text-sm font-semibold transition-all shadow-md hover:shadow-lg"
+                  href={getDownloadUrl(book.fileUrl, book.title, 'pdf')}
+                  download={`${book.title}.pdf`}
+                  className="flex-1 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-cemim-green hover:bg-cemim-green-hover text-white text-sm font-semibold transition-all shadow-md hover:shadow-lg cursor-pointer"
                 >
                   <Download className="w-4 h-4" />
                   Descargar Libro (PDF)
