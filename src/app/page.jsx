@@ -24,13 +24,13 @@ export default function HomePage() {
 
   return (
     <div className="relative">
-      {/* Hero Section */}
+      {/* 1. Hero Section (Banner de Bienvenida) */}
       <Hero />
 
-      {/* About Section */}
-      <AboutSection />
+      {/* 2. Contact & Admissions (Contactos) */}
+      <ContactSection />
 
-      {/* Repository Section (3 Tabs: Libros, Audioteca, VIDEOS) */}
+      {/* 3. Repository Section (Repositorio Multimedia: Libros, Audioteca, VIDEOS) */}
       <RepositorySection
         onPlayAudio={handlePlayAudio}
         currentAudioTrack={currentAudioTrack}
@@ -38,8 +38,8 @@ export default function HomePage() {
         onOpenBook={(book) => setCurrentBook(book)}
       />
 
-      {/* Contact & Admissions */}
-      <ContactSection />
+      {/* 4. About Section (Sobre Mangayacu) */}
+      <AboutSection />
 
       {/* Modals & Media Players */}
       {currentAudioTrack && (
