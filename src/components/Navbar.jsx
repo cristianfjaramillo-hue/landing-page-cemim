@@ -10,10 +10,10 @@ export default function Navbar() {
   return (
     <header className="sticky top-0 z-50 bg-cemim-green text-white shadow-md border-b border-cemim-green-dark/30 transition-all">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-20">
+        <div className="relative flex items-center justify-between h-20">
           
           {/* Logo & Brand Name */}
-          <Link href="/" className="flex items-center gap-3 group flex-shrink-0">
+          <Link href="/" className="flex items-center gap-3 group flex-shrink-0 z-10">
             <div className="h-12 w-12 rounded-xl bg-white border border-white/30 overflow-hidden flex items-center justify-center p-1 shadow-md group-hover:scale-105 transition-transform">
               <img 
                 src="/logo.jpg" 
@@ -31,31 +31,31 @@ export default function Navbar() {
             </div>
           </Link>
 
-          {/* Desktop Navigation Links */}
-          <nav className="hidden md:flex items-center gap-6 lg:gap-8 ml-8">
+          {/* Desktop Navigation Links (Centrados con la misma separación) */}
+          <nav className="hidden md:flex items-center justify-center gap-8 lg:gap-10 absolute left-1/2 -translate-x-1/2">
             <a 
               href="#acerca" 
-              className="text-sm font-semibold text-white/90 hover:text-white hover:bg-white/10 px-3.5 py-2 rounded-xl transition-all"
+              className="text-sm font-semibold text-white/90 hover:text-white hover:bg-white/10 px-3.5 py-2 rounded-xl transition-all whitespace-nowrap"
             >
               Sobre Mangayacu
             </a>
             <a 
               href="#repositorio" 
-              className="text-sm font-semibold text-white/90 hover:text-white hover:bg-white/10 px-3.5 py-2 rounded-xl flex items-center gap-1.5 transition-all"
+              className="text-sm font-semibold text-white/90 hover:text-white hover:bg-white/10 px-3.5 py-2 rounded-xl flex items-center gap-1.5 transition-all whitespace-nowrap"
             >
               <Compass className="w-4 h-4 text-white" />
               <span>Recursos</span>
             </a>
-          </nav>
-
-          {/* Right Section: Contactos + Admin Link + CTA */}
-          <div className="hidden md:flex items-center gap-4 lg:gap-5 ml-auto">
             <a 
               href="#contacto" 
-              className="text-sm font-semibold text-white/90 hover:text-white hover:bg-white/10 px-3.5 py-2 rounded-xl transition-all"
+              className="text-sm font-semibold text-white/90 hover:text-white hover:bg-white/10 px-3.5 py-2 rounded-xl transition-all whitespace-nowrap"
             >
               Contactos
             </a>
+          </nav>
+
+          {/* Right Section: Admin Link + CTA */}
+          <div className="hidden md:flex items-center gap-3 lg:gap-4 ml-auto z-10">
             <Link 
               href="/admin" 
               className="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-xl transition-colors"
@@ -72,7 +72,7 @@ export default function Navbar() {
           </div>
 
           {/* Mobile Menu Button */}
-          <div className="flex items-center gap-2 md:hidden">
+          <div className="flex items-center gap-2 md:hidden z-10">
             <Link 
               href="/admin" 
               className="p-2 text-white/80 hover:text-white"
@@ -107,7 +107,7 @@ export default function Navbar() {
             onClick={() => setIsOpen(false)}
             className="block px-3 py-2.5 rounded-xl text-base font-semibold text-white hover:bg-white/15 transition-colors"
           >
-            Repositorio Multimedia (Libros, Audios, Videos)
+            Recursos
           </a>
           <a
             href="#contacto"
