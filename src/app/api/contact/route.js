@@ -9,7 +9,7 @@ const TARGET_EMAIL = process.env.ADMIN_EMAIL || 'cristian.f.jaramillo@gmail.com'
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { nombre, email, telefono, interes, mensaje } = body;
+    const { nombre, email, telefono, interes, mensaje, attachmentUrl, attachmentName, attachmentSize } = body;
 
     if (!nombre || !email) {
       return NextResponse.json({ 
@@ -25,6 +25,9 @@ export async function POST(request) {
       telefono: telefono ? telefono.trim() : '',
       interes: interes || 'General',
       mensaje: mensaje ? mensaje.trim() : '',
+      attachmentUrl: attachmentUrl || null,
+      attachmentName: attachmentName || null,
+      attachmentSize: attachmentSize || null,
       createdAt: new Date().toISOString()
     };
 
@@ -73,6 +76,7 @@ export async function POST(request) {
           'Teléfono / WhatsApp': telefono || 'No provisto',
           'Área de Interés': interes,
           'Mensaje o Consulta': mensaje || 'Sin mensaje adicional',
+          'Archivo Adjunto': attachmentUrl ? `${attachmentName || 'Ver Archivo'} (${attachmentUrl})` : 'Ninguno',
           'Fecha de Registro': new Date().toLocaleString('es-EC')
         }),
         signal: controller.signal

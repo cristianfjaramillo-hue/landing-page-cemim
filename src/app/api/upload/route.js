@@ -21,13 +21,19 @@ export async function POST(request) {
     // Sanitize file name
     const cleanFileName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
     const safeName = `${Date.now()}_${cleanFileName}`;
-    const fileSizeFormatted = `${(file.size / (1024 * 1024)).toFixed(2)} MB`;
+    const folder = (formData.get('folder') || 'uploads').replace(/[^a-zA-Z0-9_-]/g, '');
+    const storagePath = `${folder}/${safeName}`;
+    const fileSizeFormatted = file.size < 1024 * 1024 
+      ? `${Math.round(file.size / 1024)} KB` 
+      : `${(file.size / (1024 * 1024)).toFixed(2)} MB`;
 
     // Determine accurate MIME type
     const ext = path.extname(file.name).toLowerCase();
     let mimeType = file.type;
     if (!mimeType || mimeType === 'application/octet-stream') {
       if (ext === '.pdf') mimeType = 'application/pdf';
+      else if (ext === '.doc') mimeType = 'application/msword';
+      else if (ext === '.docx') mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
       else if (ext === '.mp3') mimeType = 'audio/mpeg';
       else if (ext === '.wav') mimeType = 'audio/wav';
       else if (ext === '.mp4') mimeType = 'video/mp4';
@@ -44,7 +50,7 @@ export async function POST(request) {
 
         let uploadRes = await supabaseAdmin.storage
           .from(bucketName)
-          .upload(`uploads/${safeName}`, buffer, {
+          .upload(storagePath, buffer, {
             contentType: mimeType,
             cacheControl: '31536000',
             upsert: true
@@ -57,7 +63,7 @@ export async function POST(request) {
             await supabaseAdmin.storage.createBucket(bucketName, { public: true });
             uploadRes = await supabaseAdmin.storage
               .from(bucketName)
-              .upload(`uploads/${safeName}`, buffer, {
+              .upload(storagePath, buffer, {
                 contentType: mimeType,
                 cacheControl: '31536000',
                 upsert: true
@@ -70,7 +76,7 @@ export async function POST(request) {
         if (!uploadRes.error && uploadRes.data) {
           const { data: publicUrlData } = supabaseAdmin.storage
             .from(bucketName)
-            .getPublicUrl(`uploads/${safeName}`);
+            .getPublicUrl(storagePath);
 
           return NextResponse.json({
             success: true,

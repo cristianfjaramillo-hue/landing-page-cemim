@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { 
   ShieldCheck, Lock, Mail, Upload, Trash2, Plus, LogOut, 
   BookOpen, Headphones, Video, CheckCircle2, AlertCircle, Eye, RefreshCw, FileText, Clock,
-  MessageSquare, Phone, ExternalLink, Inbox, Users
+  MessageSquare, Phone, ExternalLink, Inbox, Users, Download, Paperclip
 } from 'lucide-react';
 import { getStreamableMediaUrl } from '@/lib/mediaUtils';
 
@@ -710,19 +710,20 @@ export default function AdminPage() {
                     <th className="px-6 py-4">WhatsApp / Teléfono</th>
                     <th className="px-6 py-4">Programa de Interés</th>
                     <th className="px-6 py-4">Mensaje</th>
+                    <th className="px-6 py-4">Archivo Adjunto</th>
                     <th className="px-6 py-4 text-right">Acciones</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   {loadingRegistrations ? (
                     <tr>
-                      <td colSpan="7" className="text-center py-12 text-gray-400 font-medium">
+                      <td colSpan="8" className="text-center py-12 text-gray-400 font-medium">
                         Cargando solicitudes...
                       </td>
                     </tr>
                   ) : registrations.length === 0 ? (
                     <tr>
-                      <td colSpan="7" className="text-center py-16 text-gray-400">
+                      <td colSpan="8" className="text-center py-16 text-gray-400">
                         <Inbox className="w-10 h-10 mx-auto mb-2 text-gray-300" />
                         <p className="font-bold text-gray-600">No hay solicitudes registradas todavía.</p>
                         <p className="text-xs text-gray-400 mt-1">Cuando una persona complete el formulario en la web, aparecerá aquí al instante.</p>
@@ -804,9 +805,43 @@ export default function AdminPage() {
                             </p>
                           </td>
 
+                          {/* Archivo Adjunto */}
+                          <td className="px-6 py-4 text-xs whitespace-nowrap">
+                            {item.attachmentUrl ? (
+                              <a
+                                href={item.attachmentUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                download
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 font-bold transition-all shadow-sm hover:shadow"
+                                title={`Descargar ${item.attachmentName || 'archivo adjunto'}`}
+                              >
+                                <Download className="w-3.5 h-3.5 text-blue-600 flex-shrink-0" />
+                                <span className="max-w-[120px] truncate">{item.attachmentName || 'Descargar archivo'}</span>
+                                {item.attachmentSize && (
+                                  <span className="text-[10px] text-blue-500 font-normal">({item.attachmentSize})</span>
+                                )}
+                              </a>
+                            ) : (
+                              <span className="text-gray-300 italic text-xs">Sin adjunto</span>
+                            )}
+                          </td>
+
                           {/* Acciones */}
                           <td className="px-6 py-4 text-right">
                             <div className="flex items-center justify-end gap-1.5">
+                              {item.attachmentUrl && (
+                                <a
+                                  href={item.attachmentUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  download
+                                  className="p-2 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"
+                                  title={`Descargar archivo adjunto (${item.attachmentName || 'archivo'})`}
+                                >
+                                  <Download className="w-4 h-4" />
+                                </a>
+                              )}
                               {waUrl && (
                                 <a
                                   href={waUrl}
