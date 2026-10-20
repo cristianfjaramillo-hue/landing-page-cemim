@@ -47,12 +47,6 @@ export default function Navbar() {
               Recursos
             </a>
             <a 
-              href="#entrenamiento" 
-              className="text-sm font-medium text-gray-700 hover:text-cemim-green transition-colors"
-            >
-              Programas
-            </a>
-            <a 
               href="#contacto" 
               className="text-sm font-medium text-gray-700 hover:text-cemim-green transition-colors"
             >
@@ -114,13 +108,6 @@ export default function Navbar() {
             className="block px-3 py-2 rounded-lg text-base font-medium text-gray-700 hover:bg-gray-50 hover:text-cemim-green"
           >
             Repositorio Multimedia (Libros, Audios, Videos)
-          </a>
-          <a
-            href="#entrenamiento"
-            onClick={() => setIsOpen(false)}
-            className="block px-3 py-2 rounded-lg text-base font-medium text-gray-700 hover:bg-gray-50 hover:text-cemim-green"
-          >
-            Programas de Formación
           </a>
           <a
             href="#contacto"

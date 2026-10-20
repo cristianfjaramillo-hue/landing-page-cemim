@@ -53,11 +53,6 @@ export default function Footer() {
                   🎥 VIDEOS y Documentales de Campo
                 </a>
               </li>
-              <li>
-                <a href="#entrenamiento" className="hover:text-cemim-green transition-colors">
-                  Campamentos y Cursos Misioneros
-                </a>
-              </li>
             </ul>
           </div>
 

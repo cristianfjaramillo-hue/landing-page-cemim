@@ -57,7 +57,7 @@ export default function AboutSection() {
                 href="#contacto"
                 className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-cemim-dark text-white text-sm font-semibold hover:bg-cemim-green transition-colors"
               >
-                Solicitar Información de Cursos
+                Contáctanos
               </a>
             </div>
           </div>
