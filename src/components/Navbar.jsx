@@ -8,13 +8,13 @@ export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-100 shadow-sm transition-all">
+    <header className="sticky top-0 z-50 bg-cemim-green text-white shadow-md border-b border-cemim-green-dark/30 transition-all">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
           
           {/* Logo & Brand Name */}
           <Link href="/" className="flex items-center gap-3 group">
-            <div className="h-12 w-12 rounded-xl bg-cemim-bg border border-gray-200 overflow-hidden flex items-center justify-center p-1 shadow-sm group-hover:scale-105 transition-transform">
+            <div className="h-12 w-12 rounded-xl bg-white border border-white/30 overflow-hidden flex items-center justify-center p-1 shadow-md group-hover:scale-105 transition-transform">
               <img 
                 src="/logo.jpg" 
                 alt="CEMIM Logo" 
@@ -22,50 +22,50 @@ export default function Navbar() {
               />
             </div>
             <div className="flex flex-col">
-              <span className="font-serif text-2xl font-black tracking-tight text-cemim-dark leading-none group-hover:text-cemim-green transition-colors">
+              <span className="font-serif text-2xl font-black tracking-tight text-white leading-none">
                 CEMIM
               </span>
-              <span className="text-[10px] uppercase tracking-wider text-cemim-gray font-semibold mt-1">
+              <span className="text-[10px] uppercase tracking-wider text-white/80 font-semibold mt-1">
                 Mangayacu • Misiones
               </span>
             </div>
           </Link>
 
           {/* Desktop Navigation Links */}
-          <nav className="hidden md:flex items-center gap-8">
+          <nav className="hidden md:flex items-center gap-3">
             <a 
               href="#acerca" 
-              className="text-sm font-medium text-gray-700 hover:text-cemim-green transition-colors"
+              className="text-sm font-semibold text-white/90 hover:text-white hover:bg-white/10 px-3.5 py-2 rounded-xl transition-all"
             >
               Sobre Mangayacu
             </a>
             <a 
               href="#repositorio" 
-              className="text-sm font-medium text-gray-700 hover:text-cemim-green flex items-center gap-1.5 transition-colors"
+              className="text-sm font-semibold text-white/90 hover:text-white hover:bg-white/10 px-3.5 py-2 rounded-xl flex items-center gap-1.5 transition-all"
             >
-              <Compass className="w-4 h-4 text-cemim-green" />
+              <Compass className="w-4 h-4 text-white" />
               Recursos
             </a>
             <a 
               href="#contacto" 
-              className="text-sm font-medium text-gray-700 hover:text-cemim-green transition-colors"
+              className="text-sm font-semibold text-white/90 hover:text-white hover:bg-white/10 px-3.5 py-2 rounded-xl transition-all"
             >
               Contacto
             </a>
           </nav>
 
           {/* CTA & Admin Link */}
-          <div className="hidden md:flex items-center gap-4">
+          <div className="hidden md:flex items-center gap-3">
             <Link 
               href="/admin" 
-              className="p-2 text-gray-400 hover:text-cemim-green transition-colors"
+              className="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-xl transition-colors"
               title="Panel Administrativo"
             >
               <ShieldCheck className="w-5 h-5" />
             </Link>
             <a 
               href="#repositorio"
-              className="inline-flex items-center justify-center px-5 py-2.5 rounded-full text-sm font-medium bg-cemim-green text-white shadow-sm hover:bg-cemim-green-hover transition-all hover:shadow"
+              className="inline-flex items-center justify-center px-5 py-2.5 rounded-full text-sm font-bold bg-white text-cemim-green shadow-md hover:bg-cemim-green-light hover:text-cemim-green-dark transition-all hover:shadow-lg hover:-translate-y-0.5"
             >
               Explorar Repositorio
             </a>
@@ -75,14 +75,14 @@ export default function Navbar() {
           <div className="flex items-center gap-2 md:hidden">
             <Link 
               href="/admin" 
-              className="p-2 text-gray-500 hover:text-cemim-green"
+              className="p-2 text-white/80 hover:text-white"
               title="Panel Administrativo"
             >
               <ShieldCheck className="w-5 h-5" />
             </Link>
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className="p-2 rounded-lg text-gray-600 hover:text-cemim-dark hover:bg-gray-100 transition-colors"
+              className="p-2 rounded-lg text-white hover:bg-white/10 transition-colors"
               aria-label="Abrir Menú"
             >
               {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -94,25 +94,25 @@ export default function Navbar() {
 
       {/* Mobile Drawer */}
       {isOpen && (
-        <div className="md:hidden bg-white border-b border-gray-200 px-4 pt-3 pb-6 space-y-3 animate-fadeIn">
+        <div className="md:hidden bg-cemim-green border-t border-white/20 px-4 pt-3 pb-6 space-y-2 animate-fadeIn text-white">
           <a
             href="#acerca"
             onClick={() => setIsOpen(false)}
-            className="block px-3 py-2 rounded-lg text-base font-medium text-gray-700 hover:bg-gray-50 hover:text-cemim-green"
+            className="block px-3 py-2.5 rounded-xl text-base font-semibold text-white hover:bg-white/15 transition-colors"
           >
             Sobre Mangayacu
           </a>
           <a
             href="#repositorio"
             onClick={() => setIsOpen(false)}
-            className="block px-3 py-2 rounded-lg text-base font-medium text-gray-700 hover:bg-gray-50 hover:text-cemim-green"
+            className="block px-3 py-2.5 rounded-xl text-base font-semibold text-white hover:bg-white/15 transition-colors"
           >
             Repositorio Multimedia (Libros, Audios, Videos)
           </a>
           <a
             href="#contacto"
             onClick={() => setIsOpen(false)}
-            className="block px-3 py-2 rounded-lg text-base font-medium text-gray-700 hover:bg-gray-50 hover:text-cemim-green"
+            className="block px-3 py-2.5 rounded-xl text-base font-semibold text-white hover:bg-white/15 transition-colors"
           >
             Contacto e Inscripciones
           </a>
@@ -120,7 +120,7 @@ export default function Navbar() {
             <a
               href="#repositorio"
               onClick={() => setIsOpen(false)}
-              className="w-full flex items-center justify-center px-4 py-3 rounded-xl bg-cemim-green text-white font-semibold text-center"
+              className="w-full flex items-center justify-center px-4 py-3 rounded-xl bg-white text-cemim-green font-bold text-center shadow-md hover:bg-cemim-green-light transition-all"
             >
               Explorar Repositorio
             </a>
