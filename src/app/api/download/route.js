@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { recordMetricEvent } from '@/lib/analyticsStore';
 
 export const dynamic = 'force-dynamic';
 
@@ -7,6 +8,7 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url);
     const url = searchParams.get('url');
     const name = searchParams.get('name') || 'documento.pdf';
+    const typeParam = searchParams.get('type');
 
     if (!url) {
       return new Response('Parámetro URL requerido', { status: 400 });
@@ -16,7 +18,14 @@ export async function GET(request) {
       .replace(/[^\w\s\u00C0-\u017F.-]/gi, '')
       .trim();
 
-    const filename = cleanName.toLowerCase().endsWith('.pdf')
+    const isAudio = cleanName.toLowerCase().endsWith('.mp3') || typeParam === 'audios';
+    const isVideo = cleanName.toLowerCase().endsWith('.mp4') || typeParam === 'videos';
+    const category = isAudio ? 'audios' : (isVideo ? 'videos' : 'libros');
+
+    // Asynchronously record download metric without blocking the response
+    recordMetricEvent('download', category).catch(() => {});
+
+    const filename = cleanName.toLowerCase().endsWith('.pdf') || isAudio || isVideo
       ? cleanName
       : `${cleanName}.pdf`;
 

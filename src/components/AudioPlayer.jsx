@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Play, Pause, Volume2, VolumeX, Download, X, Headphones, Disc, AlertCircle } from 'lucide-react';
-import { getStreamableMediaUrl, getDownloadUrl } from '@/lib/mediaUtils';
+import { getStreamableMediaUrl, getDownloadUrl, trackMetric } from '@/lib/mediaUtils';
 
 export default function AudioPlayer({ track, onClose }) {
   const audioRef = useRef(null);
@@ -191,6 +191,7 @@ export default function AudioPlayer({ track, onClose }) {
           <a
             href={downloadUrl}
             download={`${track.title}.mp3`}
+            onClick={() => trackMetric('download', 'audios')}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-cemim-green hover:text-white text-gray-200 text-xs font-medium transition-all cursor-pointer"
             title="Descargar audio MP3"
           >

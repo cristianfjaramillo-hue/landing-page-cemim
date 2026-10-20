@@ -6,7 +6,7 @@ import {
   ExternalLink, FileText, Clock, User, Filter, Sparkles, CheckCircle2,
   ChevronLeft, ChevronRight
 } from 'lucide-react';
-import { getStreamableMediaUrl, getDownloadUrl } from '@/lib/mediaUtils';
+import { getStreamableMediaUrl, getDownloadUrl, trackMetric } from '@/lib/mediaUtils';
 
 export default function RepositorySection({ 
   onPlayAudio, 
@@ -304,6 +304,7 @@ export default function RepositorySection({
                       <a
                         href={getDownloadUrl(book.fileUrl, book.title, 'pdf')}
                         download={`${book.title}.pdf`}
+                        onClick={() => trackMetric('download', 'libros')}
                         className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-cemim-green hover:bg-cemim-green-hover text-white text-xs font-bold transition-all shadow-sm cursor-pointer"
                         title="Descargar libro en PDF"
                       >
@@ -387,6 +388,7 @@ export default function RepositorySection({
                         <a
                           href={getDownloadUrl(audio.fileUrl, audio.title, 'mp3')}
                           download={`${audio.title}.mp3`}
+                          onClick={() => trackMetric('download', 'audios')}
                           className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold transition-colors cursor-pointer"
                           title="Descargar audio MP3"
                         >
@@ -463,11 +465,10 @@ export default function RepositorySection({
                         Ver Video
                       </button>
                       <a
-                        href={video.fileUrl}
-                        download={video.title}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold transition-colors"
+                        href={getDownloadUrl(video.fileUrl, video.title, 'mp4')}
+                        download={`${video.title}.mp4`}
+                        onClick={() => trackMetric('download', 'videos')}
+                        className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold transition-colors cursor-pointer"
                         title="Descargar video"
                       >
                         <Download className="w-3.5 h-3.5" />

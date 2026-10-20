@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { X, Download, Share2, Film } from 'lucide-react';
-import { getStreamableMediaUrl, getDriveEmbedUrl } from '@/lib/mediaUtils';
+import { getStreamableMediaUrl, getDriveEmbedUrl, getDownloadUrl, trackMetric } from '@/lib/mediaUtils';
 
 export default function VideoModal({ video, onClose }) {
   if (!video) return null;
@@ -62,11 +62,10 @@ export default function VideoModal({ video, onClose }) {
 
             <div className="flex items-center gap-3">
               <a
-                href={video.fileUrl}
-                download={video.title}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-cemim-green hover:bg-cemim-green-hover text-white text-sm font-semibold transition-all shadow-md"
+                href={getDownloadUrl(video.fileUrl, video.title, 'mp4')}
+                download={`${video.title}.mp4`}
+                onClick={() => trackMetric('download', 'videos')}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-cemim-green hover:bg-cemim-green-hover text-white text-sm font-semibold transition-all shadow-md cursor-pointer"
               >
                 <Download className="w-4 h-4" />
                 Descargar Video

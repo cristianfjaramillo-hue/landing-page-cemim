@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { 
   ShieldCheck, Lock, Mail, Upload, Trash2, Plus, LogOut, 
   BookOpen, Headphones, Video, CheckCircle2, AlertCircle, Eye, RefreshCw, FileText, Clock,
-  MessageSquare, Phone, ExternalLink, Inbox, Users, Download, Paperclip
+  MessageSquare, Phone, ExternalLink, Inbox, Users, Download, Paperclip,
+  BarChart3, Activity, ChevronDown, ChevronUp, TrendingUp
 } from 'lucide-react';
 import { getStreamableMediaUrl } from '@/lib/mediaUtils';
 import { supabase } from '@/lib/supabase';
@@ -29,6 +30,14 @@ export default function AdminPage() {
   // Registrations / Inquiries State
   const [registrations, setRegistrations] = useState([]);
   const [loadingRegistrations, setLoadingRegistrations] = useState(false);
+
+  // Analytics & Metrics State (Visitas y Descargas por Formato)
+  const [analytics, setAnalytics] = useState({
+    pageViews: 0,
+    downloads: { libros: 0, audios: 0, videos: 0, total: 0 }
+  });
+  const [loadingAnalytics, setLoadingAnalytics] = useState(false);
+  const [isCornerWidgetOpen, setIsCornerWidgetOpen] = useState(true);
 
   // New Resource Form Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -59,8 +68,24 @@ export default function AdminPage() {
       setIsAuthenticated(true);
       fetchResources();
       fetchRegistrations();
+      fetchAnalytics();
     }
   }, []);
+
+  const fetchAnalytics = async (fresh = false) => {
+    setLoadingAnalytics(true);
+    try {
+      const res = await fetch(`/api/analytics?fresh=${fresh ? 'true' : 'false'}&t=${Date.now()}`, { cache: 'no-store' });
+      const json = await res.json();
+      if (json.success && json.data) {
+        setAnalytics(json.data);
+      }
+    } catch (err) {
+      console.error('Error fetching analytics:', err);
+    } finally {
+      setLoadingAnalytics(false);
+    }
+  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -80,6 +105,7 @@ export default function AdminPage() {
         localStorage.setItem('cemim_admin_logged', 'true');
         fetchResources();
         fetchRegistrations();
+        fetchAnalytics();
       } else {
         setAuthError(data.message || 'Credenciales incorrectas');
       }
@@ -450,36 +476,77 @@ export default function AdminPage() {
         )}
 
         {/* Dashboard Top Header */}
-        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-gray-200 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2 text-xs font-bold text-cemim-green uppercase tracking-wider">
-              <ShieldCheck className="w-4 h-4" />
-              Sesión de Administrador Activa
+        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-gray-200 shadow-sm flex flex-col gap-5">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2 text-xs font-bold text-cemim-green uppercase tracking-wider">
+                <ShieldCheck className="w-4 h-4" />
+                Sesión de Administrador Activa
+              </div>
+              <h1 className="font-serif text-3xl font-black text-cemim-dark mt-1">
+                Gestión del Repositorio CEMIM
+              </h1>
+              <p className="text-sm text-gray-500">
+                Sube nuevos libros, historias en audio y videos, o administra y elimina los existentes.
+              </p>
             </div>
-            <h1 className="font-serif text-3xl font-black text-cemim-dark mt-1">
-              Gestión del Repositorio CEMIM
-            </h1>
-            <p className="text-sm text-gray-500">
-              Sube nuevos libros, historias en audio y videos, o administra y elimina los existentes.
-            </p>
+
+            <div className="flex items-center gap-3">
+              <button
+                onClick={openNewResourceModal}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-cemim-green hover:bg-cemim-green-hover text-white text-sm font-bold shadow-md hover:shadow-lg transition-all"
+              >
+                <Plus className="w-4 h-4" />
+                Subir Nuevo Recurso
+              </button>
+              <button
+                onClick={handleLogout}
+                className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-semibold transition-colors"
+                title="Cerrar Sesión"
+              >
+                <LogOut className="w-4 h-4" />
+                Salir
+              </button>
+            </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <button
-              onClick={openNewResourceModal}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-cemim-green hover:bg-cemim-green-hover text-white text-sm font-bold shadow-md hover:shadow-lg transition-all"
-            >
-              <Plus className="w-4 h-4" />
-              Subir Nuevo Recurso
-            </button>
-            <button
-              onClick={handleLogout}
-              className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-semibold transition-colors"
-              title="Cerrar Sesión"
-            >
-              <LogOut className="w-4 h-4" />
-              Salir
-            </button>
+          {/* Resumen Superior de Tráfico y Descargas */}
+          <div className="pt-4 border-t border-gray-100 flex flex-wrap items-center justify-between gap-3 text-xs">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-800 font-bold border border-emerald-200 shadow-sm">
+                <Eye className="w-3.5 h-3.5 text-emerald-600" />
+                <span>{analytics.pageViews.toLocaleString()}</span>
+                <span className="text-[11px] font-normal text-emerald-700">Visitas Landing</span>
+              </span>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 text-blue-800 font-bold border border-blue-200 shadow-sm">
+                <Download className="w-3.5 h-3.5 text-blue-600" />
+                <span>{analytics.downloads.total.toLocaleString()}</span>
+                <span className="text-[11px] font-normal text-blue-700">Descargas Totales</span>
+              </span>
+            </div>
+
+            <div className="flex items-center gap-4 text-gray-600 text-xs">
+              <span className="flex items-center gap-1">
+                <BookOpen className="w-3.5 h-3.5 text-cemim-green" />
+                Libros: <strong className="text-cemim-dark">{analytics.downloads.libros.toLocaleString()}</strong>
+              </span>
+              <span className="flex items-center gap-1">
+                <Headphones className="w-3.5 h-3.5 text-blue-600" />
+                Audios: <strong className="text-cemim-dark">{analytics.downloads.audios.toLocaleString()}</strong>
+              </span>
+              <span className="flex items-center gap-1">
+                <Video className="w-3.5 h-3.5 text-red-600" />
+                Videos: <strong className="text-cemim-dark">{analytics.downloads.videos.toLocaleString()}</strong>
+              </span>
+              <button
+                onClick={() => fetchAnalytics(true)}
+                disabled={loadingAnalytics}
+                className="p-1 rounded-lg text-gray-400 hover:text-cemim-green hover:bg-gray-100 transition-colors ml-1"
+                title="Actualizar métricas de visitas y descargas"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${loadingAnalytics ? 'animate-spin text-cemim-green' : ''}`} />
+              </button>
+            </div>
           </div>
         </div>
 
@@ -1225,6 +1292,129 @@ export default function AdminPage() {
             </div>
           </div>
         )}
+
+        {/* ==================== WIDGET EN LA ESQUINA: VISITAS Y DESCARGAS ==================== */}
+        <div className="fixed bottom-6 right-6 z-40 max-w-sm w-full sm:w-80 transition-all duration-300">
+          {isCornerWidgetOpen ? (
+            <div className="bg-white/95 backdrop-blur-md rounded-2xl border border-gray-200 shadow-2xl p-4 sm:p-5 overflow-hidden animate-slideUp">
+              {/* Widget Header */}
+              <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+                <div className="flex items-center gap-2">
+                  <span className="relative flex h-2.5 w-2.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                  </span>
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-gray-700 flex items-center gap-1.5">
+                    <Activity className="w-3.5 h-3.5 text-cemim-green" />
+                    Métricas Landing Page
+                  </h4>
+                </div>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => fetchAnalytics(true)}
+                    disabled={loadingAnalytics}
+                    className="p-1 text-gray-400 hover:text-cemim-green hover:bg-gray-100 rounded-lg transition-colors"
+                    title="Actualizar métricas"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${loadingAnalytics ? 'animate-spin text-cemim-green' : ''}`} />
+                  </button>
+                  <button
+                    onClick={() => setIsCornerWidgetOpen(false)}
+                    className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                    title="Minimizar panel a la esquina"
+                  >
+                    <ChevronDown className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Visitas Landing Page */}
+              <div className="py-3 border-b border-gray-100 flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-cemim-green/10 text-cemim-green flex items-center justify-center flex-shrink-0">
+                    <Eye className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-bold uppercase text-gray-400">Visitas Landing Page</p>
+                    <span className="text-xs text-gray-500">Tráfico único de usuarios</span>
+                  </div>
+                </div>
+                <span className="text-xl font-black text-cemim-dark">
+                  {analytics.pageViews.toLocaleString()}
+                </span>
+              </div>
+
+              {/* Descargas Separadas por Formato */}
+              <div className="pt-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-bold uppercase text-gray-400 flex items-center gap-1">
+                    <Download className="w-3 h-3 text-cemim-green" />
+                    Descargas Realizadas
+                  </span>
+                  <span className="text-xs font-bold text-cemim-green bg-cemim-green/10 px-2 py-0.5 rounded-full">
+                    Total: {analytics.downloads.total.toLocaleString()}
+                  </span>
+                </div>
+
+                <div className="space-y-1.5 pt-1">
+                  {/* Libros */}
+                  <div className="flex items-center justify-between text-xs bg-gray-50 px-2.5 py-1.5 rounded-lg border border-gray-100">
+                    <span className="flex items-center gap-1.5 text-gray-700 font-medium">
+                      <BookOpen className="w-3.5 h-3.5 text-cemim-green" />
+                      Libros (PDF)
+                    </span>
+                    <span className="font-bold text-cemim-dark">
+                      {analytics.downloads.libros.toLocaleString()}
+                    </span>
+                  </div>
+
+                  {/* Audios */}
+                  <div className="flex items-center justify-between text-xs bg-gray-50 px-2.5 py-1.5 rounded-lg border border-gray-100">
+                    <span className="flex items-center gap-1.5 text-gray-700 font-medium">
+                      <Headphones className="w-3.5 h-3.5 text-blue-600" />
+                      Cuentos en Audio (MP3)
+                    </span>
+                    <span className="font-bold text-cemim-dark">
+                      {analytics.downloads.audios.toLocaleString()}
+                    </span>
+                  </div>
+
+                  {/* Videos */}
+                  <div className="flex items-center justify-between text-xs bg-gray-50 px-2.5 py-1.5 rounded-lg border border-gray-100">
+                    <span className="flex items-center gap-1.5 text-gray-700 font-medium">
+                      <Video className="w-3.5 h-3.5 text-red-600" />
+                      Videos
+                    </span>
+                    <span className="font-bold text-cemim-dark">
+                      {analytics.downloads.videos.toLocaleString()}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            /* Minimized Pill in the corner */
+            <button
+              onClick={() => setIsCornerWidgetOpen(true)}
+              className="ml-auto flex items-center gap-2.5 px-4 py-2.5 bg-white/95 backdrop-blur-md rounded-2xl border border-gray-200 shadow-xl hover:shadow-2xl text-xs font-bold text-cemim-dark hover:text-cemim-green transition-all group"
+            >
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>
+              <span className="flex items-center gap-1.5">
+                <Eye className="w-3.5 h-3.5 text-cemim-green" />
+                {analytics.pageViews.toLocaleString()} Visitas
+              </span>
+              <span className="text-gray-300">|</span>
+              <span className="flex items-center gap-1.5">
+                <Download className="w-3.5 h-3.5 text-cemim-green" />
+                {analytics.downloads.total.toLocaleString()} Descargas
+              </span>
+              <ChevronUp className="w-3.5 h-3.5 text-gray-400 group-hover:text-cemim-green transition-transform" />
+            </button>
+          )}
+        </div>
 
       </div>
     </div>

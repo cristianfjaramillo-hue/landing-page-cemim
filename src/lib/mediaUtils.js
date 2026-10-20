@@ -70,5 +70,31 @@ export function getDownloadUrl(rawUrl, title = '', defaultExt = 'pdf') {
   }
 
   // 3. Fallback to server download endpoint
-  return `/api/download?url=${encodeURIComponent(url)}&name=${encodeURIComponent(cleanTitle)}`;
+  return `/api/download?url=${encodeURIComponent(url)}&name=${encodeURIComponent(cleanTitle)}&type=${encodeURIComponent(defaultExt === 'mp3' ? 'audios' : (defaultExt === 'mp4' ? 'videos' : 'libros'))}`;
+}
+
+/**
+ * Sends a lightweight analytics event to record page views or downloads
+ * @param {'page_view' | 'download'} type
+ * @param {'libros' | 'audios' | 'videos'} [category]
+ */
+export function trackMetric(type, category = 'libros') {
+  try {
+    if (typeof window !== 'undefined') {
+      const payload = JSON.stringify({ type, category });
+      const blob = new Blob([payload], { type: 'application/json' });
+      if (navigator.sendBeacon) {
+        navigator.sendBeacon('/api/analytics', blob);
+      } else {
+        fetch('/api/analytics', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: payload,
+          keepalive: true
+        }).catch(() => {});
+      }
+    }
+  } catch (e) {
+    // Non-blocking telemetry
+  }
 }
