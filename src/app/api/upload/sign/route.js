@@ -26,7 +26,7 @@ export async function POST(request) {
     const cleanFolder = folder.replace(/[^a-zA-Z0-9_-]/g, '') || 'attachments';
     const storagePath = `${cleanFolder}/${safeName}`;
 
-    // Generar URL firmada para subida directa desde el navegador (soporta hasta 100 MB o más)
+    // Generar URL firmada para subida directa desde el navegador (soporta hasta 50 MB)
     const { data, error } = await supabaseAdmin.storage
       .from(bucketName)
       .createSignedUploadUrl(storagePath, { upsert: true });

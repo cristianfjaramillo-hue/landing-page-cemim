@@ -36,10 +36,10 @@ export default function ContactSection() {
       return;
     }
 
-    // Validar tamaño máximo: 100 MB
-    const MAX_SIZE_BYTES = 100 * 1024 * 1024;
+    // Validar tamaño máximo: 50 MB
+    const MAX_SIZE_BYTES = 50 * 1024 * 1024;
     if (file.size > MAX_SIZE_BYTES) {
-      setAttachmentError('El archivo excede el tamaño máximo permitido de 100 MB.');
+      setAttachmentError('El archivo excede el tamaño máximo permitido de 50 MB.');
       if (fileInputRef.current) fileInputRef.current.value = '';
       return;
     }
@@ -54,7 +54,7 @@ export default function ContactSection() {
     setUploadingAttachment(true);
 
     try {
-      // 1. Solicitar URL firmada para subida directa a Supabase Storage (soporta hasta 100 MB directo al storage)
+      // 1. Solicitar URL firmada para subida directa a Supabase Storage (soporta hasta 50 MB directo al storage)
       const signRes = await fetch('/api/upload/sign', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -388,7 +388,7 @@ export default function ContactSection() {
                         <span>Haz clic para seleccionar un archivo</span>
                       </div>
                       <p className="text-[11px] text-gray-400 mt-1">
-                        Formatos: .doc, .pdf, .jpg, .png, .mp3, .mp4 (hasta 100 MB)
+                        Formatos: .doc, .pdf, .jpg, .png, .mp3, .mp4 (hasta 50 MB)
                       </p>
                       <input
                         ref={fileInputRef}

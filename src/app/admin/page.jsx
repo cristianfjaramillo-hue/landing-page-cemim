@@ -179,7 +179,7 @@ export default function AdminPage() {
     setIsModalOpen(true);
   };
 
-  // Upload file helper (soporta hasta 100 MB mediante subida directa firmada a Supabase)
+  // Upload file helper (soporta hasta 50 MB mediante subida directa firmada a Supabase)
   const handleFileUpload = async (e, fieldName) => {
     const file = e.target.files?.[0];
     if (!file) return;
