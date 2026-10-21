@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { ArrowRight, BookOpen, Headphones, Video, Shield, Award, Compass, Play } from 'lucide-react';
+import { ArrowRight, BookOpen, Headphones, Video, Shield, Award, Compass, Play, Sparkles, Sparkle } from 'lucide-react';
 
 export default function Hero({ onExploreClick }) {
   return (
@@ -21,9 +21,53 @@ export default function Hero({ onExploreClick }) {
               Centro de Entrenamiento Misionero Internacional Mangayacu
             </div>
 
-            {/* Main Headline */}
-            <h1 className="font-serif text-4xl sm:text-5xl lg:text-6xl font-black text-cemim-dark tracking-tight leading-[1.12]">
-              Capacitando y enviando obreros a las <span className="text-cemim-green underline decoration-cemim-green/30 decoration-wavy">naciones</span>
+            {/* Main Headline con efectos de transición, destello y brillos */}
+            <h1 className="font-serif text-4xl sm:text-5xl lg:text-6xl font-black text-cemim-dark tracking-tight leading-[1.15] animate-heroFadeIn">
+              Capacitando y enviando obreros a las{' '}
+              <span className="relative inline-block group">
+                {/* Texto de "naciones" con efecto de destello de luz continuo */}
+                <span className="relative z-10 headline-shimmer font-black">
+                  naciones
+                </span>
+
+                {/* Destello / Brillo principal superior (Estrellas ✨) */}
+                <span 
+                  className="absolute -top-3 -right-4 sm:-top-4 sm:-right-5 z-20 pointer-events-none text-cemim-green sparkle-icon-1"
+                  aria-hidden="true"
+                >
+                  <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 fill-cemim-green/40 drop-shadow-[0_0_10px_rgba(124,163,43,0.8)]" />
+                </span>
+
+                {/* Destello / Brillo secundario inferior izquierdo (✦) */}
+                <span 
+                  className="absolute -bottom-1 -left-3 sm:-bottom-2 sm:-left-4 z-20 pointer-events-none text-lime-500 sparkle-icon-2"
+                  aria-hidden="true"
+                >
+                  <Sparkle className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-lime-300 drop-shadow-[0_0_8px_rgba(203,242,97,0.9)]" />
+                </span>
+
+                {/* Aura luminosa de fondo (Glow) */}
+                <span 
+                  className="absolute inset-0 bg-cemim-green/15 blur-xl -z-10 rounded-full scale-125 pointer-events-none animate-pulse" 
+                  aria-hidden="true" 
+                />
+
+                {/* Línea ondulada inferior con destello y resplandor pulsante */}
+                <svg
+                  className="absolute -bottom-2.5 left-0 w-full h-3.5 text-cemim-green overflow-visible animated-wave"
+                  viewBox="0 0 100 12"
+                  preserveAspectRatio="none"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M0,6 Q12.5,0 25,6 T50,6 T75,6 T100,6"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="3.5"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </span>
             </h1>
 
             {/* Subtitle */}
