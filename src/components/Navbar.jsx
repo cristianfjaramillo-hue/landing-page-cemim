@@ -2,10 +2,13 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { Menu, X, BookOpen, Headphones, Video, ShieldCheck, Compass } from 'lucide-react';
+import { usePathname } from 'next/navigation';
+import { Menu, X, BookOpen, Headphones, Video, ShieldCheck, Compass, ExternalLink } from 'lucide-react';
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
+  const pathname = usePathname();
+  const isAdmin = pathname?.startsWith('/admin');
 
   return (
     <header className="sticky top-0 z-50 bg-cemim-green text-white shadow-md border-b border-cemim-green-dark/30 transition-all">
@@ -33,49 +36,59 @@ export default function Navbar() {
 
           {/* Desktop Navigation Links (Centrados con la misma separación) */}
           <nav className="hidden md:flex items-center justify-center gap-8 lg:gap-10 absolute left-1/2 -translate-x-1/2">
-            <a 
-              href="#acerca" 
+            <Link 
+              href="/#acerca" 
               className="text-sm font-semibold text-white/90 hover:text-white hover:bg-white/10 px-3.5 py-2 rounded-xl transition-all whitespace-nowrap"
             >
               Sobre Mangayacu
-            </a>
-            <a 
-              href="#repositorio" 
+            </Link>
+            <Link 
+              href="/#repositorio" 
               className="text-sm font-semibold text-white/90 hover:text-white hover:bg-white/10 px-3.5 py-2 rounded-xl flex items-center gap-1.5 transition-all whitespace-nowrap"
             >
               <Compass className="w-4 h-4 text-white" />
               <span>Recursos</span>
-            </a>
-            <a 
-              href="#contacto" 
+            </Link>
+            <Link 
+              href="/#contacto" 
               className="text-sm font-semibold text-white/90 hover:text-white hover:bg-white/10 px-3.5 py-2 rounded-xl transition-all whitespace-nowrap"
             >
               Contactos
-            </a>
+            </Link>
           </nav>
 
           {/* Right Section: Admin Link + CTA */}
           <div className="hidden md:flex items-center gap-3 lg:gap-4 ml-auto z-10">
             <Link 
               href="/admin" 
-              className="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-xl transition-colors"
+              className={`p-2 rounded-xl transition-colors ${isAdmin ? 'bg-white/20 text-white' : 'text-white/80 hover:text-white hover:bg-white/10'}`}
               title="Panel Administrativo"
             >
               <ShieldCheck className="w-5 h-5" />
             </Link>
-            <a 
-              href="#repositorio"
-              className="inline-flex items-center justify-center px-5 py-2.5 rounded-full text-sm font-bold bg-white text-cemim-green shadow-md hover:bg-cemim-green-light hover:text-cemim-green-dark transition-all hover:shadow-lg hover:-translate-y-0.5"
+            
+            {/* Botón Superior Derecho: En admin salta a la landing page en 1 solo toque */}
+            <Link 
+              href={isAdmin ? "/" : "/#repositorio"}
+              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold bg-white text-cemim-green shadow-md hover:bg-cemim-green-light hover:text-cemim-green-dark transition-all hover:shadow-lg hover:-translate-y-0.5 cursor-pointer"
+              title={isAdmin ? "Saltar a la Landing Page" : "Explorar Repositorio Multimedia"}
             >
-              Explorar Repositorio
-            </a>
+              {isAdmin ? (
+                <>
+                  <ExternalLink className="w-4 h-4 text-cemim-green" />
+                  <span>Ir a la Landing Page</span>
+                </>
+              ) : (
+                <span>Explorar Repositorio</span>
+              )}
+            </Link>
           </div>
 
           {/* Mobile Menu Button */}
           <div className="flex items-center gap-2 md:hidden z-10">
             <Link 
               href="/admin" 
-              className="p-2 text-white/80 hover:text-white"
+              className={`p-2 rounded-lg ${isAdmin ? 'text-white bg-white/20' : 'text-white/80 hover:text-white'}`}
               title="Panel Administrativo"
             >
               <ShieldCheck className="w-5 h-5" />
@@ -95,35 +108,42 @@ export default function Navbar() {
       {/* Mobile Drawer */}
       {isOpen && (
         <div className="md:hidden bg-cemim-green border-t border-white/20 px-4 pt-3 pb-6 space-y-2 animate-fadeIn text-white">
-          <a
-            href="#acerca"
+          <Link
+            href="/#acerca"
             onClick={() => setIsOpen(false)}
             className="block px-3 py-2.5 rounded-xl text-base font-semibold text-white hover:bg-white/15 transition-colors"
           >
             Sobre Mangayacu
-          </a>
-          <a
-            href="#repositorio"
+          </Link>
+          <Link
+            href="/#repositorio"
             onClick={() => setIsOpen(false)}
             className="block px-3 py-2.5 rounded-xl text-base font-semibold text-white hover:bg-white/15 transition-colors"
           >
             Recursos
-          </a>
-          <a
-            href="#contacto"
+          </Link>
+          <Link
+            href="/#contacto"
             onClick={() => setIsOpen(false)}
             className="block px-3 py-2.5 rounded-xl text-base font-semibold text-white hover:bg-white/15 transition-colors"
           >
             Contactos
-          </a>
+          </Link>
           <div className="pt-2">
-            <a
-              href="#repositorio"
+            <Link
+              href={isAdmin ? "/" : "/#repositorio"}
               onClick={() => setIsOpen(false)}
-              className="w-full flex items-center justify-center px-4 py-3 rounded-xl bg-white text-cemim-green font-bold text-center shadow-md hover:bg-cemim-green-light transition-all"
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-white text-cemim-green font-bold text-center shadow-md hover:bg-cemim-green-light transition-all cursor-pointer"
             >
-              Explorar Repositorio
-            </a>
+              {isAdmin ? (
+                <>
+                  <ExternalLink className="w-4 h-4 text-cemim-green" />
+                  <span>Ir a la Landing Page</span>
+                </>
+              ) : (
+                <span>Explorar Repositorio</span>
+              )}
+            </Link>
           </div>
         </div>
       )}

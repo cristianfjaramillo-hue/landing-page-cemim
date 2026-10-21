@@ -492,6 +492,14 @@ export default function AdminPage() {
             </div>
 
             <div className="flex items-center gap-3">
+              <Link
+                href="/"
+                className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-white border border-gray-200 hover:border-cemim-green text-gray-700 hover:text-cemim-green text-sm font-semibold transition-all shadow-sm"
+                title="Saltar a la Landing Page Principal"
+              >
+                <ExternalLink className="w-4 h-4 text-cemim-green" />
+                <span className="hidden sm:inline">Ver Landing Page</span>
+              </Link>
               <button
                 onClick={openNewResourceModal}
                 className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-cemim-green hover:bg-cemim-green-hover text-white text-sm font-bold shadow-md hover:shadow-lg transition-all"
