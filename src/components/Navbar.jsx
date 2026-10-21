@@ -16,19 +16,27 @@ export default function Navbar() {
         <div className="relative flex items-center justify-between h-20">
           
           {/* Logo & Brand Name */}
-          <Link href="/" className="flex items-center gap-3 group flex-shrink-0 z-10">
-            <div className="h-12 w-12 rounded-xl bg-white border border-white/30 overflow-hidden flex items-center justify-center p-1 shadow-md group-hover:scale-105 transition-transform">
+          <Link href="/" className="flex items-center gap-3 group flex-shrink-0 z-10" aria-label="CEMIM - Centro de Entrenamiento">
+            <div className="h-12 w-12 rounded-xl bg-white border border-white/30 overflow-hidden flex items-center justify-center p-1 shadow-md group-hover:scale-105 transition-transform flex-shrink-0">
               <img 
                 src="/logo.jpg" 
                 alt="CEMIM Logo" 
                 className="h-full w-full object-contain" 
               />
             </div>
-            <div className="flex flex-col">
-              <span className="font-serif text-2xl font-black tracking-tight text-white leading-none">
-                CEMIM
-              </span>
-              <span className="text-[9px] sm:text-[10px] uppercase tracking-wider text-white/90 font-semibold mt-1">
+            <div className="flex flex-col items-center justify-center text-center">
+              <div 
+                className="w-full flex justify-between items-center font-serif text-2xl font-black text-white leading-none select-none"
+                aria-hidden="true"
+              >
+                <span>C</span>
+                <span>E</span>
+                <span>M</span>
+                <span>I</span>
+                <span>M</span>
+              </div>
+              <span className="sr-only">CEMIM</span>
+              <span className="text-[9px] sm:text-[10px] uppercase tracking-wider text-white/90 font-semibold mt-1 whitespace-nowrap">
                 Centro de Entrenamiento
               </span>
             </div>
