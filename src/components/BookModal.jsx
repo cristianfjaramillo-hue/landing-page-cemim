@@ -1,10 +1,11 @@
 'use client';
 
-import React from 'react';
-import { X, Download, BookOpen, FileText, CheckCircle2 } from 'lucide-react';
-import { getDownloadUrl, trackMetric } from '@/lib/mediaUtils';
+import React, { useState } from 'react';
+import { X, Download, BookOpen, FileText, CheckCircle2, Loader2 } from 'lucide-react';
+import { getDownloadUrl, downloadFile, trackMetric } from '@/lib/mediaUtils';
 
 export default function BookModal({ book, onClose }) {
+  const [isDownloading, setIsDownloading] = useState(false);
   if (!book) return null;
 
   return (
@@ -85,11 +86,25 @@ export default function BookModal({ book, onClose }) {
                 <a
                   href={getDownloadUrl(book.fileUrl, book.title, 'pdf')}
                   download={`${book.title}.pdf`}
-                  onClick={() => trackMetric('download', 'libros')}
-                  className="flex-1 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-cemim-green hover:bg-cemim-green-hover text-white text-sm font-semibold transition-all shadow-md hover:shadow-lg cursor-pointer"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    downloadFile(book.fileUrl, book.title, 'pdf', setIsDownloading);
+                  }}
+                  className={`flex-1 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-cemim-green hover:bg-cemim-green-hover text-white text-sm font-semibold transition-all shadow-md hover:shadow-lg cursor-pointer ${
+                    isDownloading ? 'opacity-85 pointer-events-none' : ''
+                  }`}
                 >
-                  <Download className="w-4 h-4" />
-                  Descargar Libro (PDF)
+                  {isDownloading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Iniciando Descarga...
+                    </>
+                  ) : (
+                    <>
+                      <Download className="w-4 h-4" />
+                      Descargar Libro (PDF)
+                    </>
+                  )}
                 </a>
                 <a
                   href={book.fileUrl}

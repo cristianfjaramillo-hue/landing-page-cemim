@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Play, Pause, Volume2, VolumeX, Download, X, Headphones, Disc, AlertCircle } from 'lucide-react';
-import { getStreamableMediaUrl, getDownloadUrl, trackMetric } from '@/lib/mediaUtils';
+import { Play, Pause, Volume2, VolumeX, Download, X, Headphones, Disc, AlertCircle, Loader2 } from 'lucide-react';
+import { getStreamableMediaUrl, getDownloadUrl, downloadFile, trackMetric } from '@/lib/mediaUtils';
 
 export default function AudioPlayer({ track, onClose }) {
   const audioRef = useRef(null);
@@ -12,6 +12,7 @@ export default function AudioPlayer({ track, onClose }) {
   const [volume, setVolume] = useState(0.85);
   const [isMuted, setIsMuted] = useState(false);
   const [hasError, setHasError] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   useEffect(() => {
     if (track && audioRef.current) {
@@ -191,12 +192,21 @@ export default function AudioPlayer({ track, onClose }) {
           <a
             href={downloadUrl}
             download={`${track.title}.mp3`}
-            onClick={() => trackMetric('download', 'audios')}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-cemim-green hover:text-white text-gray-200 text-xs font-medium transition-all cursor-pointer"
+            onClick={(e) => {
+              e.preventDefault();
+              downloadFile(track.fileUrl, track.title, 'mp3', setIsDownloading);
+            }}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-cemim-green hover:text-white text-gray-200 text-xs font-medium transition-all cursor-pointer ${
+              isDownloading ? 'opacity-85 pointer-events-none' : ''
+            }`}
             title="Descargar audio MP3"
           >
-            <Download className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Descargar MP3</span>
+            {isDownloading ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin text-cemim-green" />
+            ) : (
+              <Download className="w-3.5 h-3.5" />
+            )}
+            <span className="hidden sm:inline">{isDownloading ? 'Descargando...' : 'Descargar MP3'}</span>
           </a>
 
           {/* Close Player */}

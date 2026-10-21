@@ -4,9 +4,9 @@ import React, { useState, useEffect } from 'react';
 import { 
   BookOpen, Headphones, Video, Search, Download, Play, Pause, 
   ExternalLink, FileText, Clock, User, Filter, Sparkles, CheckCircle2,
-  ChevronLeft, ChevronRight
+  ChevronLeft, ChevronRight, Loader2
 } from 'lucide-react';
-import { getStreamableMediaUrl, getDownloadUrl, trackMetric } from '@/lib/mediaUtils';
+import { getStreamableMediaUrl, getDownloadUrl, downloadFile, trackMetric } from '@/lib/mediaUtils';
 
 export default function RepositorySection({ 
   onPlayAudio, 
@@ -19,6 +19,7 @@ export default function RepositorySection({
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('todos');
+  const [downloadingId, setDownloadingId] = useState(null);
 
   // Load resources from API
   const loadResources = async () => {
@@ -304,11 +305,20 @@ export default function RepositorySection({
                       <a
                         href={getDownloadUrl(book.fileUrl, book.title, 'pdf')}
                         download={`${book.title}.pdf`}
-                        onClick={() => trackMetric('download', 'libros')}
-                        className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-cemim-green hover:bg-cemim-green-hover text-white text-xs font-bold transition-all shadow-sm cursor-pointer"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          downloadFile(book.fileUrl, book.title, 'pdf', (loading) => setDownloadingId(loading ? book.id : null));
+                        }}
+                        className={`inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-cemim-green hover:bg-cemim-green-hover text-white text-xs font-bold transition-all shadow-sm cursor-pointer ${
+                          downloadingId === book.id ? 'opacity-85 pointer-events-none' : ''
+                        }`}
                         title="Descargar libro en PDF"
                       >
-                        <Download className="w-3.5 h-3.5" />
+                        {downloadingId === book.id ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          <Download className="w-3.5 h-3.5" />
+                        )}
                         PDF
                       </a>
                     </div>
@@ -388,11 +398,20 @@ export default function RepositorySection({
                         <a
                           href={getDownloadUrl(audio.fileUrl, audio.title, 'mp3')}
                           download={`${audio.title}.mp3`}
-                          onClick={() => trackMetric('download', 'audios')}
-                          className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold transition-colors cursor-pointer"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            downloadFile(audio.fileUrl, audio.title, 'mp3', (loading) => setDownloadingId(loading ? audio.id : null));
+                          }}
+                          className={`inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold transition-colors cursor-pointer ${
+                            downloadingId === audio.id ? 'opacity-85 pointer-events-none' : ''
+                          }`}
                           title="Descargar audio MP3"
                         >
-                          <Download className="w-3.5 h-3.5" />
+                          {downloadingId === audio.id ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin text-cemim-green" />
+                          ) : (
+                            <Download className="w-3.5 h-3.5" />
+                          )}
                           MP3
                         </a>
                       </div>
@@ -467,11 +486,20 @@ export default function RepositorySection({
                       <a
                         href={getDownloadUrl(video.fileUrl, video.title, 'mp4')}
                         download={`${video.title}.mp4`}
-                        onClick={() => trackMetric('download', 'videos')}
-                        className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold transition-colors cursor-pointer"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          downloadFile(video.fileUrl, video.title, 'mp4', (loading) => setDownloadingId(loading ? video.id : null));
+                        }}
+                        className={`inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold transition-colors cursor-pointer ${
+                          downloadingId === video.id ? 'opacity-85 pointer-events-none' : ''
+                        }`}
                         title="Descargar video"
                       >
-                        <Download className="w-3.5 h-3.5" />
+                        {downloadingId === video.id ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin text-cemim-green" />
+                        ) : (
+                          <Download className="w-3.5 h-3.5" />
+                        )}
                         Descargar
                       </a>
                     </div>

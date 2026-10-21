@@ -1,10 +1,11 @@
 'use client';
 
-import React from 'react';
-import { X, Download, Share2, Film } from 'lucide-react';
-import { getStreamableMediaUrl, getDriveEmbedUrl, getDownloadUrl, trackMetric } from '@/lib/mediaUtils';
+import React, { useState } from 'react';
+import { X, Download, Share2, Film, Loader2 } from 'lucide-react';
+import { getStreamableMediaUrl, getDriveEmbedUrl, getDownloadUrl, downloadFile, trackMetric } from '@/lib/mediaUtils';
 
 export default function VideoModal({ video, onClose }) {
+  const [isDownloading, setIsDownloading] = useState(false);
   if (!video) return null;
 
   const streamUrl = getStreamableMediaUrl(video.fileUrl);
@@ -64,11 +65,25 @@ export default function VideoModal({ video, onClose }) {
               <a
                 href={getDownloadUrl(video.fileUrl, video.title, 'mp4')}
                 download={`${video.title}.mp4`}
-                onClick={() => trackMetric('download', 'videos')}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-cemim-green hover:bg-cemim-green-hover text-white text-sm font-semibold transition-all shadow-md cursor-pointer"
+                onClick={(e) => {
+                  e.preventDefault();
+                  downloadFile(video.fileUrl, video.title, 'mp4', setIsDownloading);
+                }}
+                className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-cemim-green hover:bg-cemim-green-hover text-white text-sm font-semibold transition-all shadow-md cursor-pointer ${
+                  isDownloading ? 'opacity-85 pointer-events-none' : ''
+                }`}
               >
-                <Download className="w-4 h-4" />
-                Descargar Video
+                {isDownloading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Iniciando Descarga...
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-4 h-4" />
+                    Descargar Video
+                  </>
+                )}
               </a>
             </div>
           </div>

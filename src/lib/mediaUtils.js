@@ -11,16 +11,10 @@ export function getStreamableMediaUrl(rawUrl) {
   if (url.startsWith('/api/audio-stream')) return url;
 
   // Match Google Drive ID from any format:
-  // - https://drive.google.com/file/d/ID/view?usp=sharing
-  // - https://drive.google.com/file/d/ID/view
-  // - https://drive.google.com/open?id=ID
-  // - https://drive.google.com/uc?id=ID
-  // - https://drive.usercontent.google.com/download?id=ID
   const driveMatch = url.match(/(?:drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?(?:export=download&)?id=)|drive\.usercontent\.google\.com\/download\?id=)([a-zA-Z0-9_-]{20,})/);
   
   if (driveMatch) {
     const fileId = driveMatch[1];
-    // Route through our dedicated streaming endpoint with Range/seeking support and automatic bypass of Google Drive virus scan warnings
     return `/api/audio-stream?id=${fileId}`;
   }
 
@@ -37,14 +31,13 @@ export function getDriveEmbedUrl(url) {
 }
 
 /**
- * Returns a direct download URL that forces the browser to download to disk
- * immediately without opening the PDF/file in browser viewer tabs.
+ * Returns a server-proxied download URL that forces the browser (especially iOS Safari and Android)
+ * to download to disk via application/octet-stream rather than opening in the inline PDF/media viewer.
  */
 export function getDownloadUrl(rawUrl, title = '', defaultExt = 'pdf') {
   if (!rawUrl || typeof rawUrl !== 'string') return '#';
   const url = rawUrl.trim();
 
-  // Sanitize title for filename
   let cleanTitle = (title || 'documento')
     .replace(/[^\w\s\u00C0-\u017F.-]/gi, '')
     .trim();
@@ -54,23 +47,76 @@ export function getDownloadUrl(rawUrl, title = '', defaultExt = 'pdf') {
     cleanTitle = `${cleanTitle}.${ext}`;
   }
 
-  // 1. Supabase Storage public URLs support ?download=filename natively
-  // which instructs Supabase to send Content-Disposition: attachment
-  if (url.includes('supabase.co/storage/v1/object/public/')) {
-    const base = url.replace(/[?&]download=[^&]*/, '');
-    const sep = base.includes('?') ? '&' : '?';
-    return `${base}${sep}download=${encodeURIComponent(cleanTitle)}`;
+  const category = defaultExt === 'mp3' ? 'audios' : (defaultExt === 'mp4' ? 'videos' : 'libros');
+
+  // Always route through /api/download to guarantee application/octet-stream and Content-Disposition: attachment,
+  // preventing iOS Safari from hijacking the navigation and displaying the PDF in-browser.
+  return `/api/download?url=${encodeURIComponent(url)}&name=${encodeURIComponent(cleanTitle)}&type=${encodeURIComponent(category)}`;
+}
+
+/**
+ * Client-side robust file download handler for Mobile (iOS Safari & Android) and Desktop.
+ * Uses Blob with forced 'application/octet-stream' to trigger native OS download dialogs,
+ * with automatic fallback to server streaming endpoint.
+ */
+export async function downloadFile(fileUrl, title = '', defaultExt = 'pdf', setDownloading = null) {
+  if (!fileUrl) return;
+
+  const category = defaultExt === 'mp3' ? 'audios' : (defaultExt === 'mp4' ? 'videos' : 'libros');
+  trackMetric('download', category);
+
+  let cleanTitle = (title || 'archivo')
+    .replace(/[^\w\s\u00C0-\u017F.-]/gi, '')
+    .trim();
+
+  const ext = defaultExt.replace(/^\./, '');
+  if (!cleanTitle.toLowerCase().endsWith(`.${ext}`)) {
+    cleanTitle = `${cleanTitle}.${ext}`;
   }
 
-  // 2. Google Drive links -> usercontent export download with confirmation
-  const driveMatch = url.match(/(?:drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?(?:export=download&)?id=)|drive\.usercontent\.google\.com\/download\?id=)([a-zA-Z0-9_-]{20,})/);
-  if (driveMatch) {
-    const fileId = driveMatch[1];
-    return `https://drive.usercontent.google.com/download?id=${fileId}&export=download&confirm=t`;
-  }
+  const serverDownloadUrl = `/api/download?url=${encodeURIComponent(fileUrl)}&name=${encodeURIComponent(cleanTitle)}&type=${category}`;
 
-  // 3. Fallback to server download endpoint
-  return `/api/download?url=${encodeURIComponent(url)}&name=${encodeURIComponent(cleanTitle)}&type=${encodeURIComponent(defaultExt === 'mp3' ? 'audios' : (defaultExt === 'mp4' ? 'videos' : 'libros'))}`;
+  if (typeof window === 'undefined') return;
+
+  if (setDownloading) setDownloading(true);
+
+  try {
+    // Determine fastest fetch route: direct CDN for Supabase, or /api/download for cross-origin sources
+    const fetchUrl = fileUrl.includes('supabase.co/storage/v1/object/public/')
+      ? fileUrl
+      : serverDownloadUrl;
+
+    const response = await fetch(fetchUrl);
+    if (!response.ok) throw new Error(`Fetch failed with status ${response.status}`);
+
+    const blob = await response.blob();
+
+    // Force binary octet-stream so iOS Safari and Android cannot render it inline in the tab
+    const octetBlob = new Blob([blob], { type: 'application/octet-stream' });
+    const blobUrl = window.URL.createObjectURL(octetBlob);
+
+    // Create temporary link and click
+    const a = document.createElement('a');
+    a.href = blobUrl;
+    a.download = cleanTitle;
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+
+    setTimeout(() => {
+      try {
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(blobUrl);
+      } catch (e) {}
+      if (setDownloading) setDownloading(false);
+    }, 1500);
+
+  } catch (err) {
+    console.warn('Direct blob download error, falling back to server download stream:', err);
+    if (setDownloading) setDownloading(false);
+    // Fallback: navigate directly to server download endpoint with application/octet-stream
+    window.location.href = serverDownloadUrl;
+  }
 }
 
 /**
