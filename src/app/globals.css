@@ -77,3 +77,34 @@ html {
   animation: textShimmer 3.8s ease-in-out infinite;
   display: inline-block;
 }
+
+/* Header Bottom Line Beam Loop */
+@keyframes headerBeamMove {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100vw);
+  }
+}
+
+.header-light-beam {
+  width: 320px;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(124, 163, 43, 0.35) 20%,
+    rgba(203, 242, 97, 0.85) 45%,
+    #ffffff 50%,
+    rgba(203, 242, 97, 0.85) 55%,
+    rgba(124, 163, 43, 0.35) 80%,
+    transparent 100%
+  );
+  box-shadow: 0 0 10px 1px rgba(255, 255, 255, 0.95), 0 0 18px 2px rgba(203, 242, 97, 0.7);
+  animation: headerBeamMove 7s linear infinite;
+  will-change: transform;
+}

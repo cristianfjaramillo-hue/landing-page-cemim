@@ -11,7 +11,7 @@ export default function Navbar() {
   const isAdmin = pathname?.startsWith('/admin');
 
   return (
-    <header className="sticky top-0 z-50 bg-cemim-green text-white shadow-md border-b border-cemim-green-dark/30 transition-all">
+    <header className="sticky top-0 z-50 bg-cemim-green text-white shadow-md transition-all">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="relative flex items-center justify-between h-20">
           
@@ -155,6 +155,11 @@ export default function Navbar() {
           </div>
         </div>
       )}
+
+      {/* Línea gris inferior de la línea gráfica con haz de luz en loop infinito */}
+      <div className="w-full h-[2.5px] bg-[#50555C] relative overflow-hidden" aria-hidden="true">
+        <div className="header-light-beam pointer-events-none" />
+      </div>
     </header>
   );
 }
