@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { ArrowRight, BookOpen, Headphones, Video, Shield, Award, Compass, Play, Sparkles, Sparkle } from 'lucide-react';
+import { ArrowRight, BookOpen, Headphones, Video, Shield, Award, Compass, Play } from 'lucide-react';
 
 export default function Hero({ onExploreClick }) {
   return (
@@ -21,29 +21,13 @@ export default function Hero({ onExploreClick }) {
               Centro de Entrenamiento Misionero Internacional Mangayacu
             </div>
 
-            {/* Main Headline con efectos de transición, destello y brillos */}
+            {/* Main Headline con efectos de transición y destello de luz */}
             <h1 className="font-serif text-4xl sm:text-5xl lg:text-6xl font-black text-cemim-dark tracking-tight leading-[1.15] animate-heroFadeIn">
               Capacitando y enviando obreros a las{' '}
               <span className="relative inline-block group">
                 {/* Texto de "naciones" con efecto de destello de luz continuo */}
                 <span className="relative z-10 headline-shimmer font-black">
                   naciones
-                </span>
-
-                {/* Destello / Brillo principal superior (Estrellas ✨) */}
-                <span 
-                  className="absolute -top-3 -right-4 sm:-top-4 sm:-right-5 z-20 pointer-events-none text-cemim-green sparkle-icon-1"
-                  aria-hidden="true"
-                >
-                  <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 fill-cemim-green/40 drop-shadow-[0_0_10px_rgba(124,163,43,0.8)]" />
-                </span>
-
-                {/* Destello / Brillo secundario inferior izquierdo (✦) */}
-                <span 
-                  className="absolute -bottom-1 -left-3 sm:-bottom-2 sm:-left-4 z-20 pointer-events-none text-lime-500 sparkle-icon-2"
-                  aria-hidden="true"
-                >
-                  <Sparkle className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-lime-300 drop-shadow-[0_0_8px_rgba(203,242,97,0.9)]" />
                 </span>
 
                 {/* Aura luminosa de fondo (Glow) */}
