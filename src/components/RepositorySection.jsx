@@ -49,8 +49,8 @@ export default function RepositorySection({
   // Available categories for current tab
   const categories = ['todos', ...new Set(tabResources.map((r) => r.category).filter(Boolean))];
 
-  // Pagination configuration (strictly 26 items per page)
-  const ITEMS_PER_PAGE = 26;
+  // Pagination configuration (27 items per page to fill 3 columns with 9 complete rows)
+  const ITEMS_PER_PAGE = 27;
   const [currentPage, setCurrentPage] = useState(1);
 
   // Filtered by search & category
