@@ -21,36 +21,11 @@ export default function Hero({ onExploreClick }) {
               Centro de Entrenamiento Misionero Internacional Mangayacu
             </div>
 
-            {/* Main Headline con efectos de transición y destello de luz */}
+            {/* Main Headline con efectos de transición y destello de luz continuo */}
             <h1 className="font-serif text-4xl sm:text-5xl lg:text-6xl font-black text-cemim-dark tracking-tight leading-[1.15] animate-heroFadeIn">
               Capacitando y enviando obreros a las{' '}
-              <span className="relative inline-block group">
-                {/* Texto de "naciones" con efecto de destello de luz continuo */}
-                <span className="relative z-10 headline-shimmer font-black">
-                  naciones
-                </span>
-
-                {/* Aura luminosa de fondo (Glow) */}
-                <span 
-                  className="absolute inset-0 bg-cemim-green/15 blur-xl -z-10 rounded-full scale-125 pointer-events-none animate-pulse" 
-                  aria-hidden="true" 
-                />
-
-                {/* Línea ondulada inferior con destello y resplandor pulsante */}
-                <svg
-                  className="absolute -bottom-2.5 left-0 w-full h-3.5 text-cemim-green overflow-visible animated-wave"
-                  viewBox="0 0 100 12"
-                  preserveAspectRatio="none"
-                  aria-hidden="true"
-                >
-                  <path
-                    d="M0,6 Q12.5,0 25,6 T50,6 T75,6 T100,6"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="3.5"
-                    strokeLinecap="round"
-                  />
-                </svg>
+              <span className="headline-shimmer font-black">
+                naciones
               </span>
             </h1>
 
