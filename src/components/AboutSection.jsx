@@ -66,8 +66,8 @@ export default function AboutSection() {
           <div className="relative">
             <div className="aspect-[4/3] rounded-3xl overflow-hidden shadow-2xl border border-gray-100 relative group">
               <img
-                src="https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=1200&q=80"
-                alt="Entorno natural Mangayacu"
+                src="/amazonia-mangayacu.jpg"
+                alt="Amazonía Ecuatoriana - Mangayacu"
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
