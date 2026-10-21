@@ -28,14 +28,14 @@ export default function Navbar() {
               <span className="font-serif text-2xl font-black tracking-tight text-white leading-none">
                 CEMIM
               </span>
-              <span className="text-[10px] uppercase tracking-wider text-white/80 font-semibold mt-1">
-                Mangayacu • Misiones
+              <span className="text-[9px] sm:text-[10px] uppercase tracking-wider text-white/90 font-semibold mt-1">
+                Centro de Entrenamiento
               </span>
             </div>
           </Link>
 
           {/* Desktop Navigation Links (Centrados con la misma separación) */}
-          <nav className="hidden md:flex items-center justify-center gap-8 lg:gap-10 absolute left-1/2 -translate-x-1/2">
+          <nav className="hidden md:flex items-center justify-center gap-6 lg:gap-10 absolute left-1/2 -translate-x-1/2">
             <Link 
               href="/#acerca" 
               className="text-sm font-semibold text-white/90 hover:text-white hover:bg-white/10 px-3.5 py-2 rounded-xl transition-all whitespace-nowrap"
