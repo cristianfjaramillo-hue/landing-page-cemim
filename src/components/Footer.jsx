@@ -10,7 +10,12 @@ export default function Footer() {
   };
 
   return (
-    <footer className="bg-cemim-dark text-gray-400 border-t border-gray-800">
+    <footer className="bg-cemim-dark text-gray-400 relative">
+      {/* Línea verde superior (5px) que cruza de lado a lado con haz de luz en dirección contraria */}
+      <div className="w-full h-[5px] bg-cemim-green relative overflow-hidden" aria-hidden="true">
+        <div className="footer-light-beam pointer-events-none" />
+      </div>
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
           
