@@ -156,8 +156,8 @@ export default function Navbar() {
         </div>
       )}
 
-      {/* Línea gris inferior de la línea gráfica con haz de luz en loop infinito */}
-      <div className="w-full h-[2.5px] bg-[#50555C] relative overflow-hidden" aria-hidden="true">
+      {/* Línea gris inferior de la línea gráfica (grosor duplicado a 5px) con haz de luz en loop infinito */}
+      <div className="w-full h-[5px] bg-[#50555C] relative overflow-hidden" aria-hidden="true">
         <div className="header-light-beam pointer-events-none" />
       </div>
     </header>
