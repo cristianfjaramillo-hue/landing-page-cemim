@@ -11,6 +11,7 @@ import { getStreamableMediaUrl, getDownloadUrl, downloadFile, trackMetric } from
 export default function RepositorySection({ 
   onPlayAudio, 
   currentAudioTrack, 
+  isAudioPlaying = false,
   onOpenVideo, 
   onOpenBook 
 }) {
@@ -329,12 +330,13 @@ export default function RepositorySection({
             {/* 2. RENDER AUDIOTECA */}
             {activeTab === 'audios' &&
               paginatedItems.map((audio) => {
-                const isPlaying = currentAudioTrack?.id === audio.id;
+                const isThisTrack = currentAudioTrack?.id === audio.id;
+                const isPlaying = isThisTrack && isAudioPlaying;
                 return (
                   <div
                     key={audio.id}
                     className={`bg-white rounded-2xl border transition-all duration-300 flex flex-col overflow-hidden shadow-sm hover:shadow-xl group ${
-                      isPlaying ? 'border-cemim-green ring-2 ring-cemim-green/20' : 'border-gray-200'
+                      isPlaying ? 'border-cemim-green ring-2 ring-cemim-green/20' : (isThisTrack ? 'border-cemim-green/50' : 'border-gray-200')
                     }`}
                   >
                     <div className="relative aspect-[16/10] bg-gray-900 overflow-hidden">
@@ -349,7 +351,7 @@ export default function RepositorySection({
                         {audio.category}
                       </span>
 
-                      {/* Play Button Overlay */}
+                      {/* Play / Pause Round Button Overlay */}
                       <button
                         onClick={() => onPlayAudio({ ...audio, fileUrl: getStreamableMediaUrl(audio.fileUrl) })}
                         className={`absolute inset-0 m-auto w-14 h-14 rounded-full flex items-center justify-center transition-all ${
@@ -357,7 +359,7 @@ export default function RepositorySection({
                             ? 'bg-cemim-green text-white scale-110 shadow-lg' 
                             : 'bg-white/90 text-cemim-dark hover:bg-cemim-green hover:text-white hover:scale-110 shadow-md'
                         }`}
-                        title={isPlaying ? 'Pausar' : 'Reproducir Historia en Audio'}
+                        title={isPlaying ? 'Pausar audio' : (isThisTrack ? 'Reanudar audio' : 'Reproducir Historia en Audio')}
                       >
                         {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6 ml-0.5" />}
                       </button>
@@ -390,10 +392,14 @@ export default function RepositorySection({
                       <div className="pt-5 mt-5 border-t border-gray-100 flex items-center gap-3">
                         <button
                           onClick={() => onPlayAudio({ ...audio, fileUrl: getStreamableMediaUrl(audio.fileUrl) })}
-                          className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-cemim-green/10 hover:bg-cemim-green hover:text-white text-cemim-green-dark text-xs font-bold transition-all"
+                          className={`flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                            isPlaying
+                              ? 'bg-cemim-green text-white shadow-sm'
+                              : 'bg-cemim-green/10 hover:bg-cemim-green hover:text-white text-cemim-green-dark'
+                          }`}
                         >
                           {isPlaying ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
-                          {isPlaying ? 'Escuchando...' : 'Reproducir'}
+                          {isPlaying ? 'Pausar' : (isThisTrack ? 'Reanudar' : 'Reproducir')}
                         </button>
                         <a
                           href={getDownloadUrl(audio.fileUrl, audio.title, 'mp3')}

@@ -4,9 +4,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Play, Pause, Volume2, VolumeX, Download, X, Headphones, Disc, AlertCircle, Loader2 } from 'lucide-react';
 import { getStreamableMediaUrl, getDownloadUrl, downloadFile, trackMetric } from '@/lib/mediaUtils';
 
-export default function AudioPlayer({ track, onClose }) {
+export default function AudioPlayer({ track, isPlaying = false, onTogglePlay, onClose }) {
   const audioRef = useRef(null);
-  const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(0.85);
@@ -14,34 +13,47 @@ export default function AudioPlayer({ track, onClose }) {
   const [hasError, setHasError] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
 
+  // 1. Cargar nuevo track cuando cambia
   useEffect(() => {
     if (track && audioRef.current) {
       setHasError(false);
       const streamUrl = getStreamableMediaUrl(track.fileUrl);
-      audioRef.current.src = streamUrl;
-      audioRef.current.load();
-      audioRef.current.play().then(() => {
-        setIsPlaying(true);
-      }).catch((e) => {
-        console.log('Autoplay prevent default, click play to listen:', e);
-        setIsPlaying(false);
-      });
+      if (audioRef.current.src !== streamUrl) {
+        audioRef.current.src = streamUrl;
+        audioRef.current.load();
+      }
+      if (isPlaying) {
+        audioRef.current.play().then(() => {
+          if (onTogglePlay) onTogglePlay(true);
+        }).catch((e) => {
+          console.log('Autoplay prevent default, click play to listen:', e);
+          if (onTogglePlay) onTogglePlay(false);
+        });
+      }
     }
-  }, [track]);
+  }, [track?.id]);
+
+  // 2. Control bidireccional: reaccionar cuando isPlaying cambia desde el padre (botones en tarjetas)
+  useEffect(() => {
+    if (!audioRef.current || !track) return;
+    if (isPlaying) {
+      if (audioRef.current.paused) {
+        audioRef.current.play().catch((e) => {
+          console.error('Error al reproducir audio:', e);
+          if (onTogglePlay) onTogglePlay(false);
+        });
+      }
+    } else {
+      if (!audioRef.current.paused) {
+        audioRef.current.pause();
+      }
+    }
+  }, [isPlaying]);
 
   const togglePlay = () => {
     if (!audioRef.current) return;
-    if (isPlaying) {
-      audioRef.current.pause();
-      setIsPlaying(false);
-    } else {
-      audioRef.current.play().then(() => {
-        setIsPlaying(true);
-        setHasError(false);
-      }).catch((e) => {
-        console.error('Error al reproducir audio:', e);
-        setIsPlaying(false);
-      });
+    if (onTogglePlay) {
+      onTogglePlay(!isPlaying);
     }
   };
 
@@ -117,7 +129,9 @@ export default function AudioPlayer({ track, onClose }) {
         onTimeUpdate={onTimeUpdate}
         onLoadedMetadata={onLoadedMetadata}
         onError={onError}
-        onEnded={() => setIsPlaying(false)}
+        onPlay={() => { if (onTogglePlay && !isPlaying) onTogglePlay(true); }}
+        onPause={() => { if (onTogglePlay && isPlaying) onTogglePlay(false); }}
+        onEnded={() => { if (onTogglePlay) onTogglePlay(false); }}
         preload="auto"
       />
 

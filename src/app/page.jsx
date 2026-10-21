@@ -12,6 +12,7 @@ import { trackMetric } from '@/lib/mediaUtils';
 
 export default function HomePage() {
   const [currentAudioTrack, setCurrentAudioTrack] = useState(null);
+  const [isAudioPlaying, setIsAudioPlaying] = useState(false);
   const [currentVideo, setCurrentVideo] = useState(null);
   const [currentBook, setCurrentBook] = useState(null);
 
@@ -30,10 +31,13 @@ export default function HomePage() {
 
   const handlePlayAudio = (track) => {
     if (currentAudioTrack && currentAudioTrack.id === track.id) {
-      // already active, leave as is or toggle
-      return;
+      // Si ya es la pista activa, alternar entre reproducir y pausar
+      setIsAudioPlaying((prev) => !prev);
+    } else {
+      // Si es una nueva pista, asignarla y reproducir de inmediato
+      setCurrentAudioTrack(track);
+      setIsAudioPlaying(true);
     }
-    setCurrentAudioTrack(track);
   };
 
   return (
@@ -48,6 +52,7 @@ export default function HomePage() {
       <RepositorySection
         onPlayAudio={handlePlayAudio}
         currentAudioTrack={currentAudioTrack}
+        isAudioPlaying={isAudioPlaying}
         onOpenVideo={(video) => setCurrentVideo(video)}
         onOpenBook={(book) => setCurrentBook(book)}
       />
@@ -59,7 +64,12 @@ export default function HomePage() {
       {currentAudioTrack && (
         <AudioPlayer
           track={currentAudioTrack}
-          onClose={() => setCurrentAudioTrack(null)}
+          isPlaying={isAudioPlaying}
+          onTogglePlay={(playing) => setIsAudioPlaying(playing)}
+          onClose={() => {
+            setCurrentAudioTrack(null);
+            setIsAudioPlaying(false);
+          }}
         />
       )}
 
