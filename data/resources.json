@@ -1,50 +1,5 @@
 [
   {
-    "title": "SOCORRO",
-    "type": "libro",
-    "author": "GARY TEJA",
-    "category": "Misiones",
-    "description": "",
-    "fileUrl": "/api/audio-stream?id=1EhOWotbcCYxc3v3qwYDrCCXE0hgmELfp",
-    "coverUrl": "https://cxagidebxwtrfumqjqmv.supabase.co/storage/v1/object/public/cemim-multimedia/covers/1792689948171_portada_3.png",
-    "duration": null,
-    "pages": 45,
-    "fileSize": "2.5 MB",
-    "id": "res_1792689243909_ff54il",
-    "createdAt": "2026-10-22",
-    "updatedAt": "2026-10-22"
-  },
-  {
-    "title": "EL ENREJADO Y LA VID",
-    "type": "libro",
-    "author": "COLING MARSHAL Y TONY PAYNE",
-    "category": "LIBRO",
-    "description": "",
-    "fileUrl": "/api/audio-stream?id=1XNYL3j0bwe5CkN1gp9HHGvhbhaBHRPI0",
-    "coverUrl": "https://cxagidebxwtrfumqjqmv.supabase.co/storage/v1/object/public/cemim-multimedia/covers/1792689949373_portada_libro_1.jpg",
-    "duration": null,
-    "pages": 50,
-    "fileSize": "320KB",
-    "id": "res_1792688914526_m8d16m",
-    "createdAt": "2026-10-22",
-    "updatedAt": "2026-10-22"
-  },
-  {
-    "title": "EL PLAN MARAVILLOSO",
-    "type": "libro",
-    "author": "LEONARD RAVENHILL",
-    "category": "LIBRO",
-    "description": "",
-    "fileUrl": "/api/audio-stream?id=150l23oeXF7IB3mOgxf-gqcG4_CvnnN4K",
-    "coverUrl": "https://cxagidebxwtrfumqjqmv.supabase.co/storage/v1/object/public/cemim-multimedia/covers/1792689949986_portada_libro_2.jpg",
-    "duration": null,
-    "pages": 146,
-    "fileSize": "1MB",
-    "id": "res_1792688762399_i4xjx4",
-    "createdAt": "2026-10-22",
-    "updatedAt": "2026-10-22"
-  },
-  {
     "id": "libro-pastoral-1",
     "title": "1 Lista Sermones del Mensajero",
     "type": "libro",
@@ -3541,5 +3496,44 @@
     "fileSize": "Video",
     "id": "res_1792511739112_cyp5xy",
     "createdAt": "2026-10-20"
+  },
+  {
+    "id": "libro-pastoral-g8-1",
+    "title": "Socorro: Guía Práctica de Ayuda y Consejería Bíblica",
+    "type": "libro",
+    "author": "Gary Teja",
+    "category": "Misiones y Consejería",
+    "description": "Manual indispensable de orientación, acompañamiento pastoral y herramientas de auxilio bíblico para el servicio misionero.",
+    "fileUrl": "https://cxagidebxwtrfumqjqmv.supabase.co/storage/v1/object/public/cemim-multimedia/uploads/g8_1792690803172_SOCORRO_LIBRO_2016.pdf",
+    "coverUrl": "https://cxagidebxwtrfumqjqmv.supabase.co/storage/v1/object/public/cemim-multimedia/covers/1792689948171_portada_3.png",
+    "fileSize": "2.49 MB",
+    "pages": 45,
+    "createdAt": "2026-10-22"
+  },
+  {
+    "id": "libro-pastoral-g8-2",
+    "title": "El Enrejado y la Vid: Un Cambio de Mentalidad en el Ministerio Cristiano",
+    "type": "libro",
+    "author": "Colin Marshall y Tony Payne",
+    "category": "Liderazgo Pastoral",
+    "description": "Una visión transformadora del ministerio pastoral enfocada en hacer discípulos que hacen discípulos en la iglesia local.",
+    "fileUrl": "https://cxagidebxwtrfumqjqmv.supabase.co/storage/v1/object/public/cemim-multimedia/uploads/g8_1792690806120_el-enrejado-y-la-vid.pdf",
+    "coverUrl": "https://cxagidebxwtrfumqjqmv.supabase.co/storage/v1/object/public/cemim-multimedia/covers/1792689949373_portada_libro_1.jpg",
+    "fileSize": "0.31 MB",
+    "pages": 50,
+    "createdAt": "2026-10-22"
+  },
+  {
+    "id": "libro-pastoral-g8-3",
+    "title": "El Plan Maravilloso: La Soberanía y el Propósito de Dios",
+    "type": "libro",
+    "author": "Leonard Ravenhill",
+    "category": "Vida Devocional",
+    "description": "Un llamado urgente al avivamiento espiritual, la oración profunda y la fidelidad inquebrantable a los propósitos del Señor.",
+    "fileUrl": "https://cxagidebxwtrfumqjqmv.supabase.co/storage/v1/object/public/cemim-multimedia/uploads/g8_1792690813808_El_plan_maravilloso.pdf",
+    "coverUrl": "https://cxagidebxwtrfumqjqmv.supabase.co/storage/v1/object/public/cemim-multimedia/covers/1792689949986_portada_libro_2.jpg",
+    "fileSize": "0.94 MB",
+    "pages": 146,
+    "createdAt": "2026-10-22"
   }
 ]
