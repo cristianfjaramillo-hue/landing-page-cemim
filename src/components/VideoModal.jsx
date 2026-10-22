@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { X, Download, Share2, Film, Loader2 } from 'lucide-react';
-import { getStreamableMediaUrl, getDriveEmbedUrl, getDownloadUrl, downloadFile, trackMetric } from '@/lib/mediaUtils';
+import { getStreamableMediaUrl, getDriveEmbedUrl, getDownloadUrl, downloadFile, trackMetric, normalizeCoverImageUrl } from '@/lib/mediaUtils';
 
 export default function VideoModal({ video, onClose }) {
   const [isDownloading, setIsDownloading] = useState(false);
@@ -46,7 +46,7 @@ export default function VideoModal({ video, onClose }) {
               controls
               autoPlay
               className="w-full h-full object-contain"
-              poster={video.coverUrl}
+              poster={normalizeCoverImageUrl(video.coverUrl)}
             >
               Tu navegador no soporta la reproducción de video HTML5.
             </video>

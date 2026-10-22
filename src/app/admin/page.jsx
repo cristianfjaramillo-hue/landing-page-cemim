@@ -8,7 +8,7 @@ import {
   MessageSquare, Phone, ExternalLink, Inbox, Users, Download, Paperclip,
   BarChart3, Activity, ChevronDown, ChevronUp, TrendingUp, Edit3, Search
 } from 'lucide-react';
-import { getStreamableMediaUrl } from '@/lib/mediaUtils';
+import { getStreamableMediaUrl, normalizeCoverImageUrl } from '@/lib/mediaUtils';
 import { supabase } from '@/lib/supabase';
 
 export default function AdminPage() {
@@ -44,9 +44,11 @@ export default function AdminPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingResource, setEditingResource] = useState(null);
   const [uploadingFile, setUploadingFile] = useState(false);
+  const [uploadingCover, setUploadingCover] = useState(false);
   const [savingResource, setSavingResource] = useState(false);
   const [notification, setNotification] = useState(null);
   const [fileSourceMode, setFileSourceMode] = useState('upload'); // 'upload' | 'url'
+  const [coverSourceMode, setCoverSourceMode] = useState('url'); // 'upload' | 'url'
   const [uploadedFileName, setUploadedFileName] = useState('');
 
   // Form Fields
@@ -193,6 +195,7 @@ export default function AdminPage() {
     setEditingResource(null);
     setUploadedFileName('');
     setFileSourceMode('upload');
+    setCoverSourceMode('upload');
     setFormData({
       title: '',
       type: 'libro',
@@ -213,6 +216,7 @@ export default function AdminPage() {
     setEditingResource(item);
     setUploadedFileName('');
     setFileSourceMode('url');
+    setCoverSourceMode('url');
     setFormData({
       title: item.title || '',
       type: item.type || 'libro',
@@ -220,7 +224,7 @@ export default function AdminPage() {
       category: item.category || '',
       description: item.description || '',
       fileUrl: item.fileUrl || '',
-      coverUrl: item.coverUrl || '',
+      coverUrl: normalizeCoverImageUrl(item.coverUrl) || '',
       pages: item.pages !== null && item.pages !== undefined ? String(item.pages) : '',
       duration: item.duration || '',
       fileSize: item.fileSize || ''
@@ -228,12 +232,16 @@ export default function AdminPage() {
     setIsModalOpen(true);
   };
 
-  // Upload file helper (soporta hasta 50 MB mediante subida directa firmada a Supabase)
+  // Upload file helper (soporta archivos y portadas mediante subida a Supabase)
   const handleFileUpload = async (e, fieldName) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    setUploadingFile(true);
+    if (fieldName === 'coverUrl') {
+      setUploadingCover(true);
+    } else {
+      setUploadingFile(true);
+    }
 
     try {
       let finalUrl = '';
@@ -241,12 +249,14 @@ export default function AdminPage() {
         ? `${Math.round(file.size / 1024)} KB` 
         : `${(file.size / (1024 * 1024)).toFixed(1)} MB`;
 
+      const uploadFolder = fieldName === 'coverUrl' ? 'covers' : 'uploads';
+
       // 1. Intentar subida directa firmada a Supabase Storage (permite hasta 100 MB)
       try {
         const signRes = await fetch('/api/upload/sign', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ fileName: file.name, folder: 'uploads' })
+          body: JSON.stringify({ fileName: file.name, folder: uploadFolder })
         });
         const signData = await signRes.json();
 
@@ -297,17 +307,22 @@ export default function AdminPage() {
           fileSize: finalSize,
           title: prev.title.trim() ? prev.title : (cleanTitle || file.name)
         }));
+        showNotification('✓ Archivo multimedia cargado exitosamente en la nube', 'success');
       } else if (fieldName === 'coverUrl') {
         setFormData((prev) => ({
           ...prev,
           coverUrl: finalUrl
         }));
+        showNotification('✓ Imagen de portada cargada exitosamente en la nube', 'success');
       }
-      showNotification('✓ Archivo cargado exitosamente en la nube', 'success');
     } catch (err) {
       showNotification('❌ Error de red al contactar el servidor de carga', 'error');
     } finally {
-      setUploadingFile(false);
+      if (fieldName === 'coverUrl') {
+        setUploadingCover(false);
+      } else {
+        setUploadingFile(false);
+      }
       if (e.target) e.target.value = '';
     }
   };
@@ -315,8 +330,8 @@ export default function AdminPage() {
   const handleSaveResource = async (e) => {
     e.preventDefault();
 
-    if (uploadingFile) {
-      showNotification('El archivo todavía se está subiendo a la nube, por favor espera un momento...', 'error');
+    if (uploadingFile || uploadingCover) {
+      showNotification('Los archivos todavía se están subiendo a la nube, por favor espera un momento...', 'error');
       return;
     }
 
@@ -330,6 +345,7 @@ export default function AdminPage() {
 
     try {
       const normalizedUrl = getStreamableMediaUrl(currentFileUrl);
+      const normalizedCover = normalizeCoverImageUrl(formData.coverUrl);
 
       if (editingResource) {
         // MODO EDICIÓN
@@ -339,7 +355,8 @@ export default function AdminPage() {
           body: JSON.stringify({
             id: editingResource.id,
             ...formData,
-            fileUrl: normalizedUrl
+            fileUrl: normalizedUrl,
+            coverUrl: normalizedCover
           })
         });
         const json = await res.json();
@@ -363,7 +380,7 @@ export default function AdminPage() {
         const res = await fetch('/api/admin/resources', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...formData, fileUrl: normalizedUrl })
+          body: JSON.stringify({ ...formData, fileUrl: normalizedUrl, coverUrl: normalizedCover })
         });
         const json = await res.json();
 
@@ -809,7 +826,14 @@ export default function AdminPage() {
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0 border border-gray-200">
                               {item.coverUrl ? (
-                                <img src={item.coverUrl} alt={item.title} className="w-full h-full object-cover" />
+                                <img 
+                                  src={normalizeCoverImageUrl(item.coverUrl)} 
+                                  alt={item.title} 
+                                  onError={(e) => {
+                                    e.currentTarget.src = 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=800&q=80';
+                                  }}
+                                  className="w-full h-full object-cover" 
+                                />
                               ) : (
                                 <div className="w-full h-full flex items-center justify-center bg-gray-200 text-gray-400">
                                   <FileText className="w-5 h-5" />
@@ -1377,17 +1401,125 @@ export default function AdminPage() {
                 </div>
 
                 {/* Cover Image Upload / URL */}
-                <div>
-                  <label className="block text-xs font-bold uppercase text-gray-600 mb-1">
-                    Imagen de Portada / Miniatura (URL)
-                  </label>
-                  <input
-                    type="url"
-                    value={formData.coverUrl}
-                    onChange={(e) => setFormData({ ...formData, coverUrl: e.target.value })}
-                    placeholder="https://images.unsplash.com/... (opcional)"
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-cemim-green/30 focus:border-cemim-green"
-                  />
+                <div className="p-5 rounded-2xl bg-gray-50 border border-gray-200 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-bold uppercase text-gray-700">
+                      Imagen de Portada / Miniatura
+                    </label>
+                    <div className="inline-flex rounded-lg bg-gray-200 p-0.5 text-xs font-semibold">
+                      <button
+                        type="button"
+                        onClick={() => setCoverSourceMode('upload')}
+                        className={`px-3 py-1 rounded-md transition-all ${
+                          coverSourceMode === 'upload' ? 'bg-white text-cemim-dark shadow-sm' : 'text-gray-600 hover:text-black'
+                        }`}
+                      >
+                        Subir imagen PC
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setCoverSourceMode('url')}
+                        className={`px-3 py-1 rounded-md transition-all ${
+                          coverSourceMode === 'url' ? 'bg-white text-cemim-dark shadow-sm' : 'text-gray-600 hover:text-black'
+                        }`}
+                      >
+                        Pegar enlace / Drive
+                      </button>
+                    </div>
+                  </div>
+
+                  {coverSourceMode === 'upload' ? (
+                    <div>
+                      <label className={`cursor-pointer flex flex-col items-center justify-center p-4 border-2 border-dashed rounded-xl transition-all ${
+                        uploadingCover 
+                          ? 'border-cemim-green bg-cemim-green/5' 
+                          : 'border-gray-300 hover:border-cemim-green bg-white hover:bg-gray-50'
+                      }`}>
+                        {uploadingCover ? (
+                          <div className="flex flex-col items-center gap-2 text-cemim-green py-2">
+                            <div className="h-6 w-6 animate-spin rounded-full border-2 border-cemim-green border-r-transparent"></div>
+                            <p className="text-xs font-bold">Subiendo imagen de portada a la nube...</p>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-3 py-1 text-center sm:text-left">
+                            <div className="w-10 h-10 rounded-lg bg-cemim-green/10 text-cemim-green flex items-center justify-center flex-shrink-0">
+                              <Upload className="w-5 h-5" />
+                            </div>
+                            <div>
+                              <p className="text-xs font-bold text-gray-800">
+                                Haz clic para seleccionar la portada desde tu equipo (JPG, PNG, WEBP)
+                              </p>
+                              <p className="text-[11px] text-gray-400">
+                                Se guardará directamente en Supabase Storage
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          disabled={uploadingCover}
+                          className="hidden"
+                          onChange={(e) => handleFileUpload(e, 'coverUrl')}
+                        />
+                      </label>
+                    </div>
+                  ) : (
+                    <div className="space-y-1.5">
+                      <input
+                        type="text"
+                        value={formData.coverUrl}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setFormData({ ...formData, coverUrl: val });
+                        }}
+                        onBlur={(e) => {
+                          const normalized = normalizeCoverImageUrl(e.target.value);
+                          if (normalized && normalized !== e.target.value) {
+                            setFormData((prev) => ({ ...prev, coverUrl: normalized }));
+                            showNotification('✓ Enlace de Google Drive optimizado automáticamente para portada directa', 'success');
+                          }
+                        }}
+                        placeholder="https://drive.google.com/... o https://images.unsplash.com/..."
+                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-xs focus:outline-none focus:ring-2 focus:ring-cemim-green/30"
+                      />
+                      <p className="text-[11px] text-gray-500">
+                        💡 Admite enlaces de Google Drive, enlaces web directos o Unsplash.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Live Thumbnail Preview */}
+                  {formData.coverUrl && (
+                    <div className="flex items-center gap-3 p-3 bg-white rounded-xl border border-gray-200">
+                      <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0 border border-gray-200 relative">
+                        <img
+                          src={normalizeCoverImageUrl(formData.coverUrl)}
+                          alt="Vista previa miniatura"
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.currentTarget.src = 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=800&q=80';
+                          }}
+                        />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-bold text-gray-800 flex items-center gap-1.5">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-green-600" />
+                          Vista previa de la miniatura
+                        </p>
+                        <p className="text-[11px] text-gray-500 truncate mt-0.5">
+                          {formData.coverUrl}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setFormData((prev) => ({ ...prev, coverUrl: '' }))}
+                        className="text-xs font-bold text-red-500 hover:underline px-2 py-1"
+                      >
+                        Quitar
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 {/* Actions */}

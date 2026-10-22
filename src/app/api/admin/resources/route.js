@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getAllResources, addResource, updateResource, deleteResourceById } from '@/lib/resourceStore';
-import { getStreamableMediaUrl } from '@/lib/mediaUtils';
+import { getStreamableMediaUrl, normalizeCoverImageUrl } from '@/lib/mediaUtils';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -57,7 +57,7 @@ export async function POST(request) {
       category: body.category || 'General',
       description: body.description || '',
       fileUrl: streamableUrl,
-      coverUrl: body.coverUrl || 'https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&w=800&q=80',
+      coverUrl: normalizeCoverImageUrl(body.coverUrl) || 'https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&w=800&q=80',
       duration: body.duration?.trim() ? body.duration.trim() : null,
       pages: body.pages ? parseInt(body.pages, 10) : null,
       fileSize: body.fileSize || (body.type === 'libro' ? 'Archivo PDF' : body.type === 'audio' ? 'Audio MP3' : 'Video')
@@ -91,7 +91,7 @@ export async function PUT(request) {
     if (body.category !== undefined) updateFields.category = body.category.trim();
     if (body.description !== undefined) updateFields.description = body.description;
     if (body.fileSize !== undefined) updateFields.fileSize = body.fileSize.trim();
-    if (body.coverUrl !== undefined) updateFields.coverUrl = body.coverUrl.trim();
+    if (body.coverUrl !== undefined) updateFields.coverUrl = normalizeCoverImageUrl(body.coverUrl.trim());
     if (body.duration !== undefined) updateFields.duration = body.duration ? body.duration.trim() : null;
     if (body.pages !== undefined) updateFields.pages = body.pages ? parseInt(body.pages, 10) : null;
     if (body.fileUrl !== undefined && body.fileUrl.trim()) {

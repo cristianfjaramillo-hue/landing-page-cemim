@@ -6,7 +6,7 @@ import {
   ExternalLink, FileText, Clock, User, Filter, Sparkles, CheckCircle2,
   ChevronLeft, ChevronRight, Loader2
 } from 'lucide-react';
-import { getStreamableMediaUrl, getDownloadUrl, downloadFile, trackMetric } from '@/lib/mediaUtils';
+import { getStreamableMediaUrl, getDownloadUrl, downloadFile, trackMetric, normalizeCoverImageUrl } from '@/lib/mediaUtils';
 
 export default function RepositorySection({ 
   onPlayAudio, 
@@ -260,8 +260,11 @@ export default function RepositorySection({
                     className="relative aspect-[16/10] bg-gray-100 overflow-hidden cursor-pointer"
                   >
                     <img
-                      src={book.coverUrl}
+                      src={normalizeCoverImageUrl(book.coverUrl)}
                       alt={book.title}
+                      onError={(e) => {
+                        e.currentTarget.src = 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=800&q=80';
+                      }}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-80" />
@@ -341,8 +344,11 @@ export default function RepositorySection({
                   >
                     <div className="relative aspect-[16/10] bg-gray-900 overflow-hidden">
                       <img
-                        src={audio.coverUrl}
+                        src={normalizeCoverImageUrl(audio.coverUrl)}
                         alt={audio.title}
+                        onError={(e) => {
+                          e.currentTarget.src = 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=800&q=80';
+                        }}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-80"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
@@ -439,8 +445,11 @@ export default function RepositorySection({
                     className="relative aspect-video bg-black overflow-hidden cursor-pointer"
                   >
                     <img
-                      src={video.coverUrl}
+                      src={normalizeCoverImageUrl(video.coverUrl)}
                       alt={video.title}
+                      onError={(e) => {
+                        e.currentTarget.src = 'https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?auto=format&fit=crop&w=800&q=80';
+                      }}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-85"
                     />
                     <div className="absolute inset-0 bg-black/30 group-hover:bg-black/10 transition-colors" />

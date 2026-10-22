@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { X, Download, BookOpen, FileText, CheckCircle2, Loader2 } from 'lucide-react';
-import { getDownloadUrl, downloadFile, trackMetric } from '@/lib/mediaUtils';
+import { getDownloadUrl, downloadFile, trackMetric, normalizeCoverImageUrl } from '@/lib/mediaUtils';
 
 export default function BookModal({ book, onClose }) {
   const [isDownloading, setIsDownloading] = useState(false);
@@ -36,8 +36,11 @@ export default function BookModal({ book, onClose }) {
             <div className="w-full sm:w-1/3 flex-shrink-0">
               <div className="aspect-[3/4] rounded-xl overflow-hidden shadow-lg border border-gray-200 bg-gray-100 relative group">
                 <img
-                  src={book.coverUrl}
+                  src={normalizeCoverImageUrl(book.coverUrl)}
                   alt={book.title}
+                  onError={(e) => {
+                    e.currentTarget.src = 'https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&w=800&q=80';
+                  }}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                 />
               </div>

@@ -21,6 +21,24 @@ export function getStreamableMediaUrl(rawUrl) {
   return url;
 }
 
+/**
+ * Normalizes any image URL (especially Google Drive sharing links) into a direct,
+ * high-performance image CDN link suitable for <img> tags.
+ */
+export function normalizeCoverImageUrl(rawUrl) {
+  if (!rawUrl || typeof rawUrl !== 'string') return '';
+  const url = rawUrl.trim();
+
+  // Detect Google Drive links and convert to direct CDN thumbnail image
+  const driveMatch = url.match(/(?:drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?(?:export=(?:download|view)&)?id=)|drive\.usercontent\.google\.com\/download\?id=|thumbnail\?id=)([a-zA-Z0-9_-]{20,})/);
+  if (driveMatch) {
+    const fileId = driveMatch[1];
+    return `https://lh3.googleusercontent.com/d/${fileId}=w1000`;
+  }
+
+  return url;
+}
+
 export function getDriveEmbedUrl(url) {
   if (!url || typeof url !== 'string') return '';
   const driveMatch = url.match(/(?:drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?(?:export=download&)?id=)|drive\.usercontent\.google\.com\/download\?id=)([a-zA-Z0-9_-]{20,})/);

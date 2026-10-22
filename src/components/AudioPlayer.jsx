@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Play, Pause, Volume2, VolumeX, Download, X, Headphones, Disc, AlertCircle, Loader2 } from 'lucide-react';
-import { getStreamableMediaUrl, getDownloadUrl, downloadFile, trackMetric } from '@/lib/mediaUtils';
+import { getStreamableMediaUrl, getDownloadUrl, downloadFile, trackMetric, normalizeCoverImageUrl } from '@/lib/mediaUtils';
 
 export default function AudioPlayer({ track, isPlaying = false, onTogglePlay, onClose }) {
   const audioRef = useRef(null);
@@ -141,7 +141,14 @@ export default function AudioPlayer({ track, isPlaying = false, onTogglePlay, on
         <div className="flex items-center gap-3 w-full sm:w-1/4 min-w-0">
           <div className="relative h-12 w-12 rounded-lg overflow-hidden bg-gray-800 flex-shrink-0 border border-gray-700">
             {track.coverUrl ? (
-              <img src={track.coverUrl} alt={track.title} className="h-full w-full object-cover" />
+              <img 
+                src={normalizeCoverImageUrl(track.coverUrl)} 
+                alt={track.title} 
+                onError={(e) => {
+                  e.currentTarget.src = 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=800&q=80';
+                }}
+                className="h-full w-full object-cover" 
+              />
             ) : (
               <div className="h-full w-full flex items-center justify-center bg-cemim-green/20">
                 <Disc className="w-6 h-6 text-cemim-green animate-spin" />
