@@ -6,7 +6,7 @@ import {
   ShieldCheck, Lock, Mail, Upload, Trash2, Plus, LogOut, 
   BookOpen, Headphones, Video, CheckCircle2, AlertCircle, Eye, RefreshCw, FileText, Clock,
   MessageSquare, Phone, ExternalLink, Inbox, Users, Download, Paperclip,
-  BarChart3, Activity, ChevronDown, ChevronUp, TrendingUp
+  BarChart3, Activity, ChevronDown, ChevronUp, TrendingUp, Edit3, Search
 } from 'lucide-react';
 import { getStreamableMediaUrl } from '@/lib/mediaUtils';
 import { supabase } from '@/lib/supabase';
@@ -26,6 +26,7 @@ export default function AdminPage() {
   const [resources, setResources] = useState([]);
   const [loadingResources, setLoadingResources] = useState(false);
   const [filterType, setFilterType] = useState('todos');
+  const [adminSearch, setAdminSearch] = useState('');
 
   // Registrations / Inquiries State
   const [registrations, setRegistrations] = useState([]);
@@ -41,6 +42,7 @@ export default function AdminPage() {
 
   // New Resource Form Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingResource, setEditingResource] = useState(null);
   const [uploadingFile, setUploadingFile] = useState(false);
   const [savingResource, setSavingResource] = useState(false);
   const [notification, setNotification] = useState(null);
@@ -186,8 +188,9 @@ export default function AdminPage() {
     return `https://wa.me/${cleaned}?text=${text}`;
   };
 
-  // Open clean modal
+  // Open clean modal for new resource
   const openNewResourceModal = () => {
+    setEditingResource(null);
     setUploadedFileName('');
     setFileSourceMode('upload');
     setFormData({
@@ -201,6 +204,26 @@ export default function AdminPage() {
       pages: '',
       duration: '',
       fileSize: ''
+    });
+    setIsModalOpen(true);
+  };
+
+  // Open modal to edit existing resource
+  const openEditResourceModal = (item) => {
+    setEditingResource(item);
+    setUploadedFileName('');
+    setFileSourceMode('url');
+    setFormData({
+      title: item.title || '',
+      type: item.type || 'libro',
+      author: item.author || '',
+      category: item.category || '',
+      description: item.description || '',
+      fileUrl: item.fileUrl || '',
+      coverUrl: item.coverUrl || '',
+      pages: item.pages !== null && item.pages !== undefined ? String(item.pages) : '',
+      duration: item.duration || '',
+      fileSize: item.fileSize || ''
     });
     setIsModalOpen(true);
   };
@@ -297,34 +320,66 @@ export default function AdminPage() {
       return;
     }
 
-    if (!formData.fileUrl) {
-      showNotification('Por favor selecciona un archivo desde tu computadora o ingresa un enlace antes de publicar.', 'error');
+    const currentFileUrl = formData.fileUrl || editingResource?.fileUrl;
+    if (!currentFileUrl) {
+      showNotification('Por favor selecciona un archivo o ingresa un enlace antes de guardar.', 'error');
       return;
     }
 
     setSavingResource(true);
 
     try {
-      const normalizedUrl = getStreamableMediaUrl(formData.fileUrl);
-      const res = await fetch('/api/admin/resources', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...formData, fileUrl: normalizedUrl })
-      });
-      const json = await res.json();
+      const normalizedUrl = getStreamableMediaUrl(currentFileUrl);
 
-      if (json.success) {
-        showNotification('¡Recurso publicado exitosamente en el repositorio!', 'success');
-        setIsModalOpen(false);
-        setUploadedFileName('');
-        
-        // Optimistic update
-        if (json.data) {
-          setResources((prev) => [json.data, ...prev.filter(r => r.id !== json.data.id)]);
+      if (editingResource) {
+        // MODO EDICIÓN
+        const res = await fetch('/api/admin/resources', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: editingResource.id,
+            ...formData,
+            fileUrl: normalizedUrl
+          })
+        });
+        const json = await res.json();
+
+        if (json.success) {
+          showNotification('¡Información del recurso editada y guardada exitosamente!', 'success');
+          setIsModalOpen(false);
+          setEditingResource(null);
+          setUploadedFileName('');
+
+          // Actualización optimista local
+          if (json.data) {
+            setResources((prev) => prev.map((r) => (r.id === editingResource.id ? json.data : r)));
+          }
+          fetchResources();
+        } else {
+          showNotification(json.message || 'Error al actualizar el recurso', 'error');
         }
-        fetchResources();
       } else {
-        showNotification(json.message || 'Error al guardar el recurso', 'error');
+        // MODO CREACIÓN
+        const res = await fetch('/api/admin/resources', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...formData, fileUrl: normalizedUrl })
+        });
+        const json = await res.json();
+
+        if (json.success) {
+          showNotification('¡Recurso publicado exitosamente en el repositorio!', 'success');
+          setIsModalOpen(false);
+          setUploadedFileName('');
+          
+          // Actualización optimista local
+          if (json.data) {
+            setResources((prev) => [json.data, ...prev.filter((r) => r.id !== json.data.id)]);
+          }
+          fetchResources();
+        } else {
+          showNotification(json.message || 'Error al guardar el recurso', 'error');
+        }
       }
     } catch (err) {
       showNotification('Error de conexión con el servidor', 'error');
@@ -373,10 +428,19 @@ export default function AdminPage() {
   const totalAudios = resources.filter((r) => r.type === 'audio').length;
   const totalVideos = resources.filter((r) => r.type === 'video').length;
 
-  // Filtered List
-  const filteredList = resources.filter(
-    (r) => filterType === 'todos' || r.type === filterType
-  );
+  // Filtered List con búsqueda por texto y tipo
+  const filteredList = resources.filter((r) => {
+    const matchesType = filterType === 'todos' || r.type === filterType;
+    if (!adminSearch) return matchesType;
+    const q = adminSearch.toLowerCase().trim();
+    const matchesSearch =
+      r.title?.toLowerCase().includes(q) ||
+      r.author?.toLowerCase().includes(q) ||
+      r.category?.toLowerCase().includes(q) ||
+      r.description?.toLowerCase().includes(q) ||
+      r.fileSize?.toLowerCase().includes(q);
+    return matchesType && matchesSearch;
+  });
 
   // ==================== VISTA LOGIN ====================
   if (!isAuthenticated) {
@@ -661,8 +725,8 @@ export default function AdminPage() {
         {/* ================= TAB 1: RECURSOS MULTIMEDIA ================= */}
         {activeTab === 'recursos' && (
           <div className="bg-white rounded-3xl border border-gray-200 shadow-sm overflow-hidden">
-            {/* Controls Bar */}
-            <div className="p-6 border-b border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+            {/* Controls Bar con Buscador y Filtros */}
+            <div className="p-6 border-b border-gray-100 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-xs font-bold uppercase text-gray-400">Filtrar por:</span>
                 {['todos', 'libro', 'audio', 'video'].map((type) => (
@@ -671,7 +735,7 @@ export default function AdminPage() {
                     onClick={() => setFilterType(type)}
                     className={`px-3 py-1.5 rounded-lg text-xs font-bold capitalize transition-colors ${
                       filterType === type 
-                        ? 'bg-cemim-dark text-white' 
+                        ? 'bg-cemim-dark text-white shadow-sm' 
                         : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                     }`}
                   >
@@ -680,14 +744,36 @@ export default function AdminPage() {
                 ))}
               </div>
 
-              <button
-                onClick={fetchResources}
-                className="inline-flex items-center gap-1.5 text-xs text-gray-500 hover:text-cemim-green"
-                title="Refrescar lista"
-              >
-                <RefreshCw className="w-3.5 h-3.5" />
-                Actualizar lista
-              </button>
+              {/* Buscador Rápido y Botón Actualizar */}
+              <div className="flex items-center gap-3 flex-1 max-w-md justify-end">
+                <div className="relative w-full">
+                  <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    value={adminSearch}
+                    onChange={(e) => setAdminSearch(e.target.value)}
+                    placeholder="Buscar por nombre, autor, categoría o peso..."
+                    className="w-full pl-9 pr-8 py-2 text-xs rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-cemim-green/30 focus:border-cemim-green transition-all"
+                  />
+                  {adminSearch && (
+                    <button
+                      onClick={() => setAdminSearch('')}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xs font-bold p-0.5"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+
+                <button
+                  onClick={fetchResources}
+                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-xs text-gray-700 font-semibold transition-colors flex-shrink-0"
+                  title="Refrescar lista"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Actualizar</span>
+                </button>
+              </div>
             </div>
 
             {/* Resources Table */}
@@ -757,13 +843,20 @@ export default function AdminPage() {
                           {item.createdAt || '2026'}
                         </td>
                         <td className="px-6 py-4 text-right">
-                          <div className="flex items-center justify-end gap-2">
+                          <div className="flex items-center justify-end gap-1.5">
+                            <button
+                              onClick={() => openEditResourceModal(item)}
+                              className="p-2 rounded-lg text-gray-500 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                              title="Editar información (nombre, autor, tipo, categoría, peso)"
+                            >
+                              <Edit3 className="w-4 h-4" />
+                            </button>
                             <a
                               href={item.fileUrl}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="p-2 rounded-lg text-gray-500 hover:text-cemim-green hover:bg-gray-100 transition-colors"
-                              title="Ver / Descargar archivo"
+                              title="Ver / Abrir archivo"
                             >
                               <Eye className="w-4 h-4" />
                             </a>
@@ -997,15 +1090,30 @@ export default function AdminPage() {
               
               <div className="px-8 py-6 border-b border-gray-100 flex items-center justify-between bg-cemim-bg">
                 <div>
-                  <h3 className="font-serif text-2xl font-bold text-cemim-dark">
-                    Subir Nuevo Recurso al Repositorio
+                  <h3 className="font-serif text-2xl font-bold text-cemim-dark flex items-center gap-2">
+                    {editingResource ? (
+                      <>
+                        <Edit3 className="w-6 h-6 text-cemim-green" />
+                        <span>Editar Información del Recurso</span>
+                      </>
+                    ) : (
+                      <>
+                        <Plus className="w-6 h-6 text-cemim-green" />
+                        <span>Subir Nuevo Recurso al Repositorio</span>
+                      </>
+                    )}
                   </h3>
                   <p className="text-xs text-gray-500 mt-0.5">
-                    Se publicará inmediatamente en la landing page y se almacenará en Supabase.
+                    {editingResource
+                      ? 'Modifica el nombre, autor, tipo, categoría, peso/tamaño y enlaces. Los cambios se guardarán de inmediato.'
+                      : 'Se publicará inmediatamente en la landing page y se almacenará en Supabase.'}
                   </p>
                 </div>
                 <button
-                  onClick={() => setIsModalOpen(false)}
+                  onClick={() => {
+                    setIsModalOpen(false);
+                    setEditingResource(null);
+                  }}
                   className="text-gray-400 hover:text-gray-700 text-xl font-bold p-1"
                 >
                   ✕
@@ -1120,13 +1228,13 @@ export default function AdminPage() {
 
                   <div>
                     <label className="block text-xs font-bold uppercase text-gray-600 mb-1">
-                      Tamaño aproximado (opcional)
+                      Peso / Tamaño del Archivo (ej. 42 MB, 1.5 MB, 120 Págs)
                     </label>
                     <input
                       type="text"
                       value={formData.fileSize}
                       onChange={(e) => setFormData({ ...formData, fileSize: e.target.value })}
-                      placeholder="Ej. 65 MB o 134 MB"
+                      placeholder="Ej. 42 MB o 120 Páginas"
                       className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-cemim-green/30 focus:border-cemim-green"
                     />
                   </div>
@@ -1182,10 +1290,10 @@ export default function AdminPage() {
                             <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0" />
                             <div className="min-w-0">
                               <p className="text-sm font-bold truncate">
-                                {uploadedFileName || 'Archivo cargado en la nube'}
+                                {uploadedFileName || (editingResource ? `Archivo actual guardado (${editingResource.type})` : 'Archivo cargado en la nube')}
                               </p>
                               <p className="text-xs text-green-700">
-                                {formData.fileSize ? `Tamaño: ${formData.fileSize}` : 'Listo para publicar'}
+                                {formData.fileSize ? `Tamaño / Peso: ${formData.fileSize}` : 'Listo para guardar'}
                               </p>
                             </div>
                           </div>
@@ -1244,7 +1352,7 @@ export default function AdminPage() {
                       )}
                     </div>
                   ) : (
-                    <div>
+                    <div className="space-y-1.5">
                       <input
                         type="text"
                         value={formData.fileUrl}
@@ -1259,6 +1367,11 @@ export default function AdminPage() {
                         placeholder="https://... Enlace directo o enlace de Google Drive"
                         className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-xs focus:outline-none focus:ring-2 focus:ring-cemim-green/30"
                       />
+                      {editingResource && (
+                        <p className="text-[11px] text-gray-500">
+                          ℹ️ Puedes mantener este enlace o reemplazarlo con una nueva URL de descarga/reproducción directa.
+                        </p>
+                      )}
                     </div>
                   )}
                 </div>
@@ -1281,7 +1394,10 @@ export default function AdminPage() {
                 <div className="pt-4 flex items-center justify-end gap-3 border-t border-gray-100">
                   <button
                     type="button"
-                    onClick={() => setIsModalOpen(false)}
+                    onClick={() => {
+                      setIsModalOpen(false);
+                      setEditingResource(null);
+                    }}
                     className="px-5 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold transition-colors"
                   >
                     Cancelar
@@ -1291,7 +1407,9 @@ export default function AdminPage() {
                     disabled={savingResource}
                     className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-cemim-green hover:bg-cemim-green-hover text-white text-xs font-bold shadow-md hover:shadow-lg transition-all disabled:opacity-50"
                   >
-                    {savingResource ? 'Guardando...' : 'Publicar en Repositorio'}
+                    {editingResource 
+                      ? (savingResource ? 'Guardando Cambios...' : 'Guardar Cambios') 
+                      : (savingResource ? 'Publicando...' : 'Publicar en Repositorio')}
                   </button>
                 </div>
 

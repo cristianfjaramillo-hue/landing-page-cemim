@@ -155,6 +155,41 @@ export async function addResource(newResource) {
   return item;
 }
 
+export async function updateResource(id, updatedFields) {
+  // Clear memory cache so we read the absolute freshest list from Supabase
+  memoryCache = null;
+  const current = await getAllResources(true);
+  const index = current.findIndex((r) => String(r.id) === String(id));
+  if (index === -1) {
+    throw new Error(`Recurso con ID "${id}" no encontrado`);
+  }
+
+  const existing = current[index];
+  const updatedItem = {
+    ...existing,
+    ...updatedFields,
+    id: existing.id, // Preserve original ID
+    createdAt: existing.createdAt || new Date().toISOString().split('T')[0],
+    updatedAt: new Date().toISOString().split('T')[0]
+  };
+
+  current[index] = updatedItem;
+
+  // Invalidate and update cache
+  memoryCache = current;
+  lastFetchTime = Date.now();
+
+  const saved = await saveToSupabase(current);
+  if (!saved) {
+    await new Promise((r) => setTimeout(r, 300));
+    await saveToSupabase(current);
+  }
+
+  saveStoredLocal(current);
+
+  return updatedItem;
+}
+
 export async function deleteResourceById(id) {
   // Clear memory cache so we read the absolute freshest list from Supabase
   memoryCache = null;

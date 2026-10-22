@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getAllResources, addResource, deleteResourceById } from '@/lib/resourceStore';
+import { getAllResources, addResource, updateResource, deleteResourceById } from '@/lib/resourceStore';
 import { getStreamableMediaUrl } from '@/lib/mediaUtils';
 
 export const dynamic = 'force-dynamic';
@@ -67,6 +67,47 @@ export async function POST(request) {
   } catch (error) {
     return NextResponse.json(
       { success: false, message: 'Error al guardar el recurso: ' + error.message },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PUT(request) {
+  try {
+    const body = await request.json();
+    const id = body.id;
+
+    if (!id) {
+      return NextResponse.json(
+        { success: false, message: 'El ID del recurso es obligatorio para editar' },
+        { status: 400 }
+      );
+    }
+
+    const updateFields = {};
+    if (body.title !== undefined) updateFields.title = body.title.trim();
+    if (body.type !== undefined) updateFields.type = body.type; // 'libro' | 'audio' | 'video'
+    if (body.author !== undefined) updateFields.author = body.author.trim();
+    if (body.category !== undefined) updateFields.category = body.category.trim();
+    if (body.description !== undefined) updateFields.description = body.description;
+    if (body.fileSize !== undefined) updateFields.fileSize = body.fileSize.trim();
+    if (body.coverUrl !== undefined) updateFields.coverUrl = body.coverUrl.trim();
+    if (body.duration !== undefined) updateFields.duration = body.duration ? body.duration.trim() : null;
+    if (body.pages !== undefined) updateFields.pages = body.pages ? parseInt(body.pages, 10) : null;
+    if (body.fileUrl !== undefined && body.fileUrl.trim()) {
+      updateFields.fileUrl = getStreamableMediaUrl(body.fileUrl.trim());
+    }
+
+    const updated = await updateResource(id, updateFields);
+
+    return NextResponse.json({
+      success: true,
+      message: 'Recurso actualizado correctamente',
+      data: updated
+    });
+  } catch (error) {
+    return NextResponse.json(
+      { success: false, message: 'Error al actualizar el recurso: ' + error.message },
       { status: 500 }
     );
   }
