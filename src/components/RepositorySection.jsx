@@ -271,6 +271,12 @@ export default function RepositorySection({
                     <span className="absolute top-3 left-3 bg-white/90 backdrop-blur-md text-cemim-dark text-[11px] font-bold px-2.5 py-1 rounded-md shadow-sm">
                       {book.category}
                     </span>
+                    {(book.id?.includes('g8') || book.createdAt >= '2026-10-20') && (
+                      <span className="absolute top-3 right-3 bg-emerald-600/90 text-white text-[10px] font-extrabold uppercase px-2 py-0.5 rounded shadow flex items-center gap-1">
+                        <Sparkles className="w-2.5 h-2.5" />
+                        Nuevo
+                      </span>
+                    )}
                     {book.pages && (
                       <span className="absolute bottom-3 right-3 bg-black/70 text-white text-[11px] font-medium px-2 py-0.5 rounded-md flex items-center gap-1">
                         <FileText className="w-3 h-3 text-cemim-green" />
@@ -356,6 +362,12 @@ export default function RepositorySection({
                       <span className="absolute top-3 left-3 bg-cemim-dark/80 backdrop-blur-md text-white text-[11px] font-bold px-2.5 py-1 rounded-md">
                         {audio.category}
                       </span>
+                      {(audio.id?.includes('mec') || audio.createdAt >= '2026-10-20') && (
+                        <span className="absolute top-3 right-3 bg-emerald-600/90 text-white text-[10px] font-extrabold uppercase px-2 py-0.5 rounded shadow flex items-center gap-1">
+                          <Sparkles className="w-2.5 h-2.5" />
+                          Nuevo
+                        </span>
+                      )}
 
                       {/* Play / Pause Round Button Overlay */}
                       <button
