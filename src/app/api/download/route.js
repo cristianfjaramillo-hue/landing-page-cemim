@@ -7,15 +7,15 @@ export const maxDuration = 60;
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
-    const url = searchParams.get('url');
-    const name = searchParams.get('name') || 'documento.pdf';
+    const rawUrl = searchParams.get('url');
+    const name = searchParams.get('name') || 'archivo';
     const typeParam = searchParams.get('type');
 
-    if (!url) {
+    if (!rawUrl) {
       return new Response('Parámetro URL requerido', { status: 400 });
     }
 
-    const cleanName = (name || 'documento')
+    let cleanName = (name || 'archivo')
       .replace(/[^\w\s\u00C0-\u017F.-]/gi, '')
       .trim();
 
@@ -26,19 +26,56 @@ export async function GET(request) {
     // Asynchronously record download metric without blocking the response
     recordMetricEvent('download', category).catch(() => {});
 
-    const filename = cleanName.toLowerCase().endsWith('.pdf') || isAudio || isVideo
-      ? cleanName
-      : `${cleanName}.pdf`;
+    const expectedExt = isAudio ? '.mp3' : (isVideo ? '.mp4' : '.pdf');
+    if (!cleanName.toLowerCase().endsWith(expectedExt)) {
+      cleanName = `${cleanName}${expectedExt}`;
+    }
+    const filename = cleanName;
 
-    // 1. Google Drive direct export URL
-    let targetUrl = url;
-    const driveMatch = url.match(/(?:drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?(?:export=download&)?id=)|drive\.usercontent\.google\.com\/download\?id=)([a-zA-Z0-9_-]{20,})/);
+    // 1. Detect and resolve Google Drive File ID from any possible URL format
+    let targetUrl = rawUrl.trim();
+    const driveMatch = targetUrl.match(/(?:drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?(?:export=download&)?id=)|drive\.usercontent\.google\.com\/download\?id=|audio-stream\?id=|[?&]id=)([a-zA-Z0-9_-]{20,})/);
+
+    let fetchHeaders = {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+    };
+
     if (driveMatch) {
-      targetUrl = `https://drive.usercontent.google.com/download?id=${driveMatch[1]}&export=download&confirm=t`;
+      const fileId = driveMatch[1];
+      targetUrl = `https://drive.usercontent.google.com/download?id=${fileId}&export=download&confirm=t`;
+    } else if (targetUrl.startsWith('/')) {
+      // Relative URL fallback: resolve against current origin
+      targetUrl = new URL(targetUrl, request.url).toString();
     }
 
     // 2. Fetch upstream file (from Supabase Storage CDN or Google Drive)
-    const upstreamRes = await fetch(targetUrl);
+    let upstreamRes = await fetch(targetUrl, {
+      headers: fetchHeaders,
+      redirect: 'follow'
+    });
+
+    // If Google returned an HTML page (e.g. virus scan confirmation for large files > 100MB)
+    const cType = upstreamRes.headers.get('content-type') || '';
+    if (cType.includes('text/html') && driveMatch) {
+      const fileId = driveMatch[1];
+      const html = await upstreamRes.text();
+      const uuidMatch = html.match(/name="uuid"\s+value="([^"]+)"/);
+      const confirmMatch = html.match(/name="confirm"\s+value="([^"]+)"/);
+      const cookies = upstreamRes.headers.get('set-cookie');
+
+      if (cookies) {
+        fetchHeaders['Cookie'] = cookies.split(';')[0];
+      }
+      const uuid = uuidMatch ? uuidMatch[1] : '';
+      const confirm = confirmMatch ? confirmMatch[1] : 't';
+      const confirmedUrl = `https://drive.usercontent.google.com/download?id=${fileId}&export=download&confirm=${confirm}&uuid=${uuid}`;
+
+      upstreamRes = await fetch(confirmedUrl, {
+        headers: fetchHeaders,
+        redirect: 'follow'
+      });
+    }
+
     if (!upstreamRes.ok) {
       return new Response(`Error al obtener archivo del almacenamiento: ${upstreamRes.statusText}`, {
         status: upstreamRes.status
@@ -46,15 +83,12 @@ export async function GET(request) {
     }
 
     const headers = new Headers();
-    // CRITICAL FOR IOS SAFARI & ANDROID:
-    // When Content-Type is 'application/pdf', iOS Safari completely overrides Content-Disposition: attachment
-    // and displays the PDF inside the browser window.
-    // By forcing 'application/octet-stream', iOS Safari cannot preview the document and is forced to display
-    // the native download confirmation dialog: "¿Deseas descargar 'archivo.pdf'?" saving directly to Files.
+    // Force application/octet-stream to prevent iOS Safari from hijacking the navigation and displaying the PDF/media in-browser.
     headers.set('Content-Type', 'application/octet-stream');
     headers.set('Content-Disposition', `attachment; filename="${filename}"; filename*=UTF-8''${encodeURIComponent(filename)}`);
     headers.set('Cache-Control', 'public, max-age=86400, s-maxage=86400, stale-while-revalidate=86400');
     headers.set('Access-Control-Allow-Origin', '*');
+    headers.set('Accept-Ranges', 'bytes');
 
     const contentLength = upstreamRes.headers.get('content-length');
     if (contentLength) {

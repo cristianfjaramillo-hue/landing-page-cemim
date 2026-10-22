@@ -80,25 +80,47 @@ export async function downloadFile(fileUrl, title = '', defaultExt = 'pdf', setD
 
   if (setDownloading) setDownloading(true);
 
+  // 1. For small PDFs hosted on Supabase CDN, direct blob download ensures iOS Safari doesn't open inline
+  const isSmallSupabasePdf = defaultExt === 'pdf' && fileUrl.includes('supabase.co/storage/v1/object/public/');
+
+  if (isSmallSupabasePdf) {
+    try {
+      const response = await fetch(fileUrl);
+      if (response.ok) {
+        const blob = await response.blob();
+        const octetBlob = new Blob([blob], { type: 'application/octet-stream' });
+        const blobUrl = window.URL.createObjectURL(octetBlob);
+
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = cleanTitle;
+        a.style.display = 'none';
+        document.body.appendChild(a);
+        a.click();
+
+        setTimeout(() => {
+          try {
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(blobUrl);
+          } catch (e) {}
+          if (setDownloading) setDownloading(false);
+        }, 1500);
+        return;
+      }
+    } catch (e) {
+      console.warn('Direct PDF blob download fallback to server stream:', e);
+    }
+  }
+
+  // 2. For Audios (MP3) and Videos (MP4) and general files:
+  // Trigger native browser download directly via /api/download which streams application/octet-stream
+  // with Content-Disposition: attachment. This avoids buffering large 40MB+ media into client RAM
+  // and allows iOS Safari, Android, and Desktop to show their native download progress and confirmation.
   try {
-    // Determine fastest fetch route: direct CDN for Supabase, or /api/download for cross-origin sources
-    const fetchUrl = fileUrl.includes('supabase.co/storage/v1/object/public/')
-      ? fileUrl
-      : serverDownloadUrl;
-
-    const response = await fetch(fetchUrl);
-    if (!response.ok) throw new Error(`Fetch failed with status ${response.status}`);
-
-    const blob = await response.blob();
-
-    // Force binary octet-stream so iOS Safari and Android cannot render it inline in the tab
-    const octetBlob = new Blob([blob], { type: 'application/octet-stream' });
-    const blobUrl = window.URL.createObjectURL(octetBlob);
-
-    // Create temporary link and click
     const a = document.createElement('a');
-    a.href = blobUrl;
+    a.href = serverDownloadUrl;
     a.download = cleanTitle;
+    a.target = '_self';
     a.style.display = 'none';
     document.body.appendChild(a);
     a.click();
@@ -106,16 +128,13 @@ export async function downloadFile(fileUrl, title = '', defaultExt = 'pdf', setD
     setTimeout(() => {
       try {
         document.body.removeChild(a);
-        window.URL.revokeObjectURL(blobUrl);
       } catch (e) {}
       if (setDownloading) setDownloading(false);
     }, 1500);
-
   } catch (err) {
-    console.warn('Direct blob download error, falling back to server download stream:', err);
-    if (setDownloading) setDownloading(false);
-    // Fallback: navigate directly to server download endpoint with application/octet-stream
+    console.warn('Native download link error, redirecting directly:', err);
     window.location.href = serverDownloadUrl;
+    if (setDownloading) setDownloading(false);
   }
 }
 
